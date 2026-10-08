@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.DS_Store
+server.log
+*.png
+patch_game.py
+test_browser_mock.py
+test_online.py
