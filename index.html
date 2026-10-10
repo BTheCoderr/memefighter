@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#100d27" />
   <meta name="description" content="Meme Fighter: an original browser fighting game with CPU and local two-player modes." />
-  <title>Meme Fighter · Online Beta v0.4</title>
+  <title>Meme Fighter · Online Beta v0.5</title>
   <style>
     :root{--ink:#f9f6ff;--sub:#b2a9cd;--bg:#100d27;--card:#201b3a;--line:#655680;--pink:#ff5caa;--mint:#61f5cf;--gold:#f7de81;--red:#ff766d;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
     *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 25% 0%,#3b2658,#100d27 65%);color:var(--ink)}button,select{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
@@ -36,7 +36,7 @@
 <body>
 <div class="shell">
   <header class="topbar">
-    <div><div class="eyebrow">Arcade online beta 004 · Fight the feed</div><div class="brand">MEME <b>✳</b> FIGHTER</div></div>
+    <div><div class="eyebrow">Arcade online beta 005 · Fight the feed</div><div class="brand">MEME <b>✳</b> FIGHTER</div></div>
     <div class="meta"><span class="pill" id="record">0 W / 0 L · VS CPU</span><button class="icon-btn" id="sound" type="button" aria-pressed="false">♪ SOUND OFF</button><button class="icon-btn" id="pause" type="button">Ⅱ PAUSE</button></div>
   </header>
   <main>
@@ -73,14 +73,14 @@
       <div class="screen" id="result" hidden><div class="panel"><span class="result-emoji" id="result-icon">🏆</span><div class="eyebrow" id="result-sub">Match complete</div><h2 id="result-title">DOGE WINS</h2><p id="result-text">The comments have been settled.</p><div class="statline" id="result-stats"></div><div class="result-actions"><button class="action-btn" id="rematch">↻ REMATCH</button><button class="alt-btn" id="change">CHANGE FIGHTERS</button></div></div></div>
       <div class="screen" id="pause-screen" hidden><div class="panel"><div class="eyebrow">Time out</div><h2>PAUSED ⏸</h2><p>Even the internet needs a break.</p><div class="result-actions"><button class="action-btn" id="resume">RESUME</button><button class="alt-btn" id="quit">CHARACTER SELECT</button></div></div></div>
     </section>
-    <div id="online-banner" role="status" aria-live="polite"></div>
+    <div id="online-banner" role="status" aria-live="polite"><span id="banner-text"></span> <button type="button" class="alt-btn" id="reopen-room" hidden>REOPEN GUEST SEAT</button></div>
     <div class="mobile" aria-label="Touch game controls">
       <div class="pad"><button class="touch-btn" data-touch="left" aria-label="Move left">◀</button><button class="touch-btn" data-touch="right" aria-label="Move right">▶</button><button class="touch-btn" data-touch="jump" aria-label="Jump">↑</button><button class="touch-btn" data-touch="block">BLOCK</button><button class="touch-btn dash" data-touch="dash">DASH</button></div>
       <div class="moves"><button class="touch-btn attack" data-touch="light">LIGHT</button><button class="touch-btn attack" data-touch="heavy">HEAVY</button><button class="touch-btn attack" data-touch="special">SPECIAL</button><button class="touch-btn ult" data-touch="ultimate">VIRAL ⚡</button></div>
     </div>
     <div class="controls"><div class="tip"><strong>Move smart. Combo hard.</strong> Chain your attacks after landing a hit. Specials cost 18 Virality, ultimates cost 100. DASH briefly dodges attacks.</div><div class="keys">P1 <span class="key">SPACE</span> dash <span class="key">A</span><span class="key">D</span> move <span class="key">W</span> jump <span class="key">S</span> block <span class="key">J</span> light <span class="key">K</span> heavy <span class="key">L</span> special <span class="key">I</span> viral · P2 arrows + right SHIFT dash + <span class="key">1</span><span class="key">2</span><span class="key">3</span><span class="key">0</span> · <span class="key">P</span> pause</div></div>
   </main>
-  <footer class="foot"><span>Fan-made playable prototype · original vector art</span><span>Online private rooms · no account required · v0.4</span></footer>
+  <footer class="foot"><span>Fan-made playable prototype · original vector art</span><span>Online private rooms · no account required · v0.5</span></footer>
 </div>
 <script>
 (()=>{'use strict';
@@ -382,7 +382,7 @@ window.addEventListener('keydown',keydown);window.addEventListener('keyup',e=>st
 for(const el of document.querySelectorAll('[data-touch]')){const action=el.dataset.touch;const begin=e=>{e.preventDefault();if(el.setPointerCapture)try{el.setPointerCapture(e.pointerId)}catch{}state.touch.add(action);el.classList.add('pressed')};const end=e=>{e.preventDefault();state.touch.delete(action);el.classList.remove('pressed')};el.addEventListener('pointerdown',begin);for(const ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,end)}
 if(new URLSearchParams(location.search).has('qa'))window.__MEME_FIGHTER_QA__={state,ROSTER,ATTACK,step,beginAttack,damage,requestAttack,startOvertime,nextRound,online};
 // Private-room networking. The host simulates combat, the guest sends input and renders snapshots.
-function notice(message,visible=true){const e=$('online-banner');e.textContent=message;e.style.display=visible?'block':'none'}
+function notice(message,visible=true){$('banner-text').textContent=message;$('online-banner').style.display=visible||!$('reopen-room').hidden?'block':'none'}
 function status(message){$('online-status').textContent=message}
 function roomLink(){return location.origin+location.pathname+'?room='+encodeURIComponent(online.code)}
 function onlineControls(){
@@ -394,10 +394,12 @@ function onlineControls(){
   $('pause').textContent=active?'● ONLINE':'Ⅱ PAUSE';
   $('ready-btn').textContent=online.ready?'✓ READY':'READY TO FIGHT';
   $('ready-btn').disabled=!!(online.room&&(!online.room.guest||!online.room.host?.online||!online.room.guest.online))||online.room?.phase!=='lobby';
+  $('reopen-room').hidden=!(online.role==='host'&&online.room?.guest&&!online.room.guest.online);
+  if(!$('reopen-room').hidden)$('online-banner').style.display='block';
 }
 function describeRoom(room){
   online.room=room;
-  online.waiting=room.phase==='fighting' && (!room.host.online||!room.guest?.online);
+  online.waiting=room.phase==='fighting' && (!!room.recovering||!room.host.online||!room.guest?.online);
   if(online.role==='host'){
     state.selections[0]=room.host.fighter;
     if(room.guest)state.selections[1]=room.guest.fighter;
@@ -409,33 +411,39 @@ function describeRoom(room){
   online.ready=(online.role==='host'?room.host:room.guest)?.ready||false;
   renderRoster(); onlineControls();
   if(room.phase==='lobby'){
+    online.remote.clear();
     status(room.guest?('Room '+room.code+' · '+(room.host.ready?'Host ready':'Host choosing')+' · '+(room.guest.ready?'Guest ready':'Guest choosing')+'. Both players must tap READY.'):('Room '+room.code+' created. Send the invite link to a friend.'));
     if(state.screen==='result'||state.screen==='fighting') {state.players=[];show('menu')}
-    notice('',false);
+    notice(online.role==='host'&&room.guest&&!room.guest.online?'Guest disconnected. Reopen their seat to invite someone else.':'',!!(online.role==='host'&&room.guest&&!room.guest.online));
   } else if(room.phase==='fighting'){
-    notice(online.waiting?'Opponent disconnected. The fight is frozen until they reconnect.':'',online.waiting);
+    notice(online.waiting?(room.recovering?'Restoring the host match…':'Opponent disconnected. The fight is frozen until they reconnect.'):'',online.waiting);
     status('Online match is live · room '+room.code);
   } else status('Match finished. Rematch to return to the lobby.');
 }
 function safePlayer(raw,side){
   const p=makePlayer(state.selections[side],side);
   if(!raw||typeof raw!=='object')return p;
-  for(const key of ['x','y','vx','vy','facing','hp','meter','wins','hitstun','dashTime','dashCooldown','invuln','ghost','hitFlash','burn','anim','glow','combo','comboClock','chain']){
+  for(const key of ['x','y','vx','vy','facing','hp','meter','wins','hitstun','dashTime','dashCooldown','invuln','ghost','hitFlash','burn','burnTick','anim','glow','combo','comboClock','chain','bufferClock']){
     if(Number.isFinite(raw[key]))p[key]=clamp(raw[key],-2000,2000);
   }
   for(const key of ['blocking','onGround'])if(typeof raw[key]==='boolean')p[key]=raw[key];
-  if(raw.attack&&['light','heavy','special','ultimate'].includes(raw.attack.name))p.attack={name:raw.attack.name,time:clamp(Number(raw.attack.time)||0,0,8),hit:!!raw.attack.hit};
+  if(raw.attack&&['light','heavy','special','ultimate'].includes(raw.attack.name))p.attack={name:raw.attack.name,time:clamp(Number(raw.attack.time)||0,0,8),hit:!!raw.attack.hit,spawned:!!raw.attack.spawned};
+  if(raw.buffer&&['light','heavy','special','ultimate'].includes(raw.buffer))p.buffer=raw.buffer;
+  if(raw.burnSource===0||raw.burnSource===1)p.burnSource=raw.burnSource;
   return p;
 }
-function applySnapshot(snapshot){
- if(online.role!=='guest'||!snapshot||!Array.isArray(snapshot.players)||snapshot.players.length!==2)return;
+function applySnapshot(snapshot,restoreHost=false){
+ if((online.role!=='guest'&&!(restoreHost&&online.role==='host'))||!snapshot||!Array.isArray(snapshot.players)||snapshot.players.length!==2)return false;
+ if(!snapshot.players.every(p=>p&&typeof p==='object'))return false;
  // A guest can refresh without losing the match; new state arrives from the host.
  if(state.mode!=='online'){state.mode='online';$('mode').value='local';state.paused=false;show(null);$('p2label').textContent='ONLINE P2'}
+ if(restoreHost){state.keys.clear();state.touch.clear();online.remote.clear();state.paused=false;state.acc=0;state.last=0;state.stage=online.room?.stage||state.stage;online.waiting=true;show(null)}
  state.players=snapshot.players.map((p,i)=>safePlayer(p,i));
  for(const key of ['time','pre','between','elapsed','hitstop','shake','flash','round'])if(Number.isFinite(snapshot[key]))state[key]=clamp(snapshot[key],0,5000);
  state.overtime=!!snapshot.overtime;
- state.projectiles=Array.isArray(snapshot.projectiles)?snapshot.projectiles.slice(0,15).filter(x=>x&&Number.isFinite(x.x)&&Number.isFinite(x.y)&&Number.isFinite(x.radius)&&typeof x.color==='string').map(x=>({x:x.x,y:x.y,radius:x.radius,color:x.color,life:x.life||0,from:x.from||0})):[];
- state.particles=Array.isArray(snapshot.particles)?snapshot.particles.slice(0,35).filter(x=>x&&Number.isFinite(x.x)&&Number.isFinite(x.y)).map(x=>({x:x.x,y:x.y,size:x.size||4,life:x.life||.1,max:x.max||1,color:typeof x.color==='string'?x.color:'#fff'})):[];
+ state.winner=snapshot.winner===0||snapshot.winner===1?snapshot.winner:null;
+ state.projectiles=Array.isArray(snapshot.projectiles)?snapshot.projectiles.slice(0,15).filter(x=>x&&Number.isFinite(x.x)&&Number.isFinite(x.y)&&Number.isFinite(x.radius)&&typeof x.color==='string').map(x=>({x:x.x,y:x.y,vx:Number.isFinite(x.vx)?x.vx:0,radius:x.radius,color:x.color,life:Number.isFinite(x.life)?x.life:0,from:x.from===1?1:0})):[];
+ state.particles=Array.isArray(snapshot.particles)?snapshot.particles.slice(0,35).filter(x=>x&&Number.isFinite(x.x)&&Number.isFinite(x.y)).map(x=>({x:x.x,y:x.y,vx:Number.isFinite(x.vx)?x.vx:0,vy:Number.isFinite(x.vy)?x.vy:0,size:x.size||4,life:x.life||.1,max:x.max||1,color:typeof x.color==='string'?x.color:'#fff'})):[];
  state.floaters=Array.isArray(snapshot.floaters)?snapshot.floaters.slice(0,10).filter(x=>x&&typeof x.text==='string'&&Number.isFinite(x.x)).map(x=>({x:x.x,y:x.y,life:x.life||.3,text:x.text.slice(0,90),size:x.size||24,color:x.color||'#fff'})):[];
  updateHud();
  if(snapshot.screen==='result'&&state.screen!=='result'){
@@ -445,9 +453,10 @@ function applySnapshot(snapshot){
     $('result-stats').textContent=state.players[0].wins+' — '+state.players[1].wins+' · BEST OF 3';
     $('rematch').textContent='↻ REMATCH LOBBY';show('result');
  }
+ return true;
 }
 function getSnapshot(){
- const safe=p=>({x:p.x,y:p.y,vx:p.vx,vy:p.vy,facing:p.facing,hp:p.hp,meter:p.meter,wins:p.wins,hitstun:p.hitstun,dashTime:p.dashTime,dashCooldown:p.dashCooldown,invuln:p.invuln,ghost:p.ghost,hitFlash:p.hitFlash,burn:p.burn,anim:p.anim,glow:p.glow,combo:p.combo,comboClock:p.comboClock,chain:p.chain,blocking:p.blocking,onGround:p.onGround,attack:p.attack?{name:p.attack.name,time:p.attack.time,hit:p.attack.hit}:null});
+ const safe=p=>({x:p.x,y:p.y,vx:p.vx,vy:p.vy,facing:p.facing,hp:p.hp,meter:p.meter,wins:p.wins,hitstun:p.hitstun,dashTime:p.dashTime,dashCooldown:p.dashCooldown,invuln:p.invuln,ghost:p.ghost,hitFlash:p.hitFlash,burn:p.burn,burnTick:p.burnTick,burnSource:p.burnSource,anim:p.anim,glow:p.glow,combo:p.combo,comboClock:p.comboClock,chain:p.chain,buffer:p.buffer,bufferClock:p.bufferClock,blocking:p.blocking,onGround:p.onGround,attack:p.attack?{name:p.attack.name,time:p.attack.time,hit:p.attack.hit,spawned:p.attack.spawned}:null});
  return {players:state.players.map(safe),time:state.time,pre:state.pre,between:state.between,elapsed:state.elapsed,hitstop:state.hitstop,shake:state.shake,flash:state.flash,round:state.round,overtime:state.overtime,screen:state.screen,winner:state.winner,projectiles:state.projectiles.slice(0,15),particles:state.particles.slice(0,35),floaters:state.floaters.slice(0,10)};
 }
 function guestInputs(){return Object.keys(KEYS.p1).filter(k=>state.keys.has(KEYS.p1[k])||state.touch.has(k))}
@@ -473,12 +482,21 @@ function connectOnline(operation,code='',token='',retry=0){
    if(message.t==='room'){describeRoom(message);return}
    if(message.t==='input'&&online.role==='host'){online.remote=new Set(message.keys);return}
    if(message.t==='snapshot'){applySnapshot(message.state);return}
+   if(message.t==='recover'&&online.role==='host'){
+     if(applySnapshot(message.state,true)){
+       onlineSend({t:'resume_ready'});
+       status('Match restored. Waiting for both players to reconnect…');
+     }else status('Unable to restore this match. Leave the room to start again.');
+     return;
+   }
    if(message.t==='begin'){
       state.selections=message.fighters.map(n=>clamp(Number(n)||0,0,3));$('stage').value=message.stage;
       $('mode').value='local';startMatch();state.mode='online';$('p2label').textContent='ONLINE P2';
       state.stage=message.stage;online.waiting=false;online.lastInput=online.lastSnap=0;
       $('rematch').textContent='↻ REMATCH LOBBY';
-      notice('',false);updateHud();return;
+      notice('',false);updateHud();
+      if(online.role==='host')onlineSend({t:'snapshot',state:getSnapshot()});
+      return;
    }
    if(message.t==='peer_left'){online.remote.clear();if(state.mode==='online'){online.waiting=true;notice('Opponent disconnected. Match frozen until they return.')}status('Opponent disconnected. Their seat is reserved for reconnection.');return}
    if(message.t==='finished'){status('Match finished. Use REMATCH LOBBY to play again.');return}
@@ -492,6 +510,7 @@ function connectOnline(operation,code='',token='',retry=0){
  });
  ws.addEventListener('error',()=>{status('Could not connect. Is the online game running on a server?')});
 }
+window.addEventListener('blur',()=>{state.keys.clear();state.touch.clear();if(online.role==='guest'&&state.mode==='online')onlineSend({t:'input',keys:[]})});
 function leaveOnline(sendLeave=true){
  if(sendLeave)onlineSend({t:'leave'});
  online.quit=true;try{if(online.code)sessionStorage.removeItem('mf-seat-'+online.code)}catch{}
@@ -505,6 +524,7 @@ $('join-room').addEventListener('click',()=>{const c=$('join-code').value.trim()
 $('join-code').addEventListener('keydown',e=>{if(e.key==='Enter')$('join-room').click()});
 $('ready-btn').addEventListener('click',()=>{online.ready=!online.ready;onlineSend({t:'ready',ready:online.ready});onlineControls()});
 $('leave-room').addEventListener('click',()=>{leaveOnline();status('Left private room. Start a new room whenever you want.')});
+$('reopen-room').addEventListener('click',()=>{if(online.role!=='host'||!online.room?.guest||online.room.guest.online)return;onlineSend({t:'reopen'});status('Reopening guest seat…')});
 $('copy-room').addEventListener('click',async()=>{const link=roomLink();try{await navigator.clipboard.writeText(link);status('Invite link copied: '+link)}catch{status('Share this link: '+link)}});
 $('stage').addEventListener('change',()=>{if(online.role==='host')onlineSend({t:'stage',stage:$('stage').value})});
 const invite=new URLSearchParams(location.search).get('room');
