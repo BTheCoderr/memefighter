@@ -41,11 +41,14 @@ class Room:
     last_seen: float = field(default_factory=time.monotonic)
     last_snapshot: float = 0
     last_input: float = 0
+    snapshot: dict | None = None
+    recovering: bool = False
 
     def summary(self):
         return {'t':'room','code':self.code,'phase':self.phase,'stage':self.stage,
                 'host':{'fighter':self.host.fighter,'ready':self.host.ready,'online':is_open(self.host.ws)},
-                'guest':None if not self.guest else {'fighter':self.guest.fighter,'ready':self.guest.ready,'online':is_open(self.guest.ws)}}
+                'guest':None if not self.guest else {'fighter':self.guest.fighter,'ready':self.guest.ready,'online':is_open(self.guest.ws)},
+                'recovering':self.recovering}
 
 
 def is_open(ws):
@@ -71,10 +74,12 @@ async def attach(room, role, token, ws):
     room.last_seen = time.monotonic()
     await send(ws, {'t':'seat','role':role,'code':room.code,'token':seat.token})
     await lobby(room)
+    # A newly loaded guest gets the last validated state immediately.
+    if role == 'guest' and room.phase == 'fighting' and room.snapshot:
+        await send(ws, {'t':'snapshot','state':room.snapshot})
     return True
 
 async def websocket(request):
-    # Browser WebSocket upgrades must originate from this game site.
     origin = request.headers.get('Origin')
     if origin:
         parsed = urlsplit(origin)
@@ -126,14 +131,20 @@ async def websocket(request):
                         if not claimed:
                             await send(ws, {'t':'error','message':'Seat expired'})
                             continue
-                        # A browser refresh destroys the host-authoritative simulation.
-                        # A transient socket reconnect does not. Reset gracefully on refresh.
-                        if claimed == 'host' and room.phase == 'fighting' and data.get('playing') is not True:
-                            room.phase = 'lobby'
-                            room.host.ready = False
-                            if room.guest: room.guest.ready = False
+                        # A host browser refresh can recover from a relay-held snapshot.
+                        # If no snapshot has reached the relay, return to lobby safely.
+                        if claimed == 'host' and room.phase == 'fighting':
+                            if room.snapshot:
+                                room.recovering = True
+                            else:
+                                room.phase = 'lobby'
+                                room.recovering = False
+                                room.host.ready = False
+                                if room.guest: room.guest.ready = False
                         current, role = room, claimed
                         await attach(room, role, token, ws)
+                        if role == 'host' and room.phase == 'fighting' and room.snapshot:
+                            await send(ws, {'t':'recover','state':room.snapshot})
                     elif room.guest:
                         await send(ws, {'t':'error','message':'Room is full (2 players max)'})
                     elif room.phase != 'lobby':
@@ -165,10 +176,11 @@ async def websocket(request):
                 await lobby(current)
                 if current.guest and current.host.ready and current.guest.ready and is_open(current.host.ws) and is_open(current.guest.ws):
                     current.phase = 'fighting'
+                    current.snapshot = None
+                    current.recovering = False
+                    current.last_snapshot = current.last_input = 0
                     await tell(current, {'t':'begin','stage':current.stage,'fighters':[current.host.fighter,current.guest.fighter]})
             elif op == 'reopen' and role == 'host':
-                # Release an abandoned seat, preserving the room code.
-                # An online opponent cannot be displaced through recovery.
                 if current.guest is None or is_open(current.guest.ws):
                     await send(ws, {'t':'error','message':'The guest must be disconnected before reopening their seat'})
                 else:
@@ -176,25 +188,38 @@ async def websocket(request):
                     current.host.ready = False
                     current.phase = 'lobby'
                     current.last_snapshot = current.last_input = 0
+                    current.snapshot = None
+                    current.recovering = False
                     await lobby(current)
-            elif op == 'input' and role == 'guest' and current.phase == 'fighting':
+            elif op == 'resume_ready' and role == 'host' and current.phase == 'fighting' and current.recovering and current.snapshot:
+                current.recovering = False
+                await lobby(current)
+                if current.guest:
+                    await send(current.guest.ws, {'t':'snapshot','state':current.snapshot})
+            elif op == 'input' and role == 'guest' and current.phase == 'fighting' and not current.recovering:
                 keys = data.get('keys')
                 if isinstance(keys,list) and len(keys) <= 9 and all(isinstance(k,str) and k in VALID_KEYS for k in keys):
                     now = time.monotonic()
                     if now-current.last_input >= 1/65:
                         current.last_input = now
                         await send(current.host.ws, {'t':'input','keys':keys})
-            elif op == 'snapshot' and role == 'host' and current.phase == 'fighting':
+            elif op == 'snapshot' and role == 'host' and current.phase == 'fighting' and not current.recovering:
                 snap = data.get('state')
                 now = time.monotonic()
-                if isinstance(snap,dict) and now-current.last_snapshot >= 1/45:
+                if (isinstance(snap,dict) and isinstance(snap.get('players'),list)
+                    and len(snap['players']) == 2 and all(isinstance(p,dict) for p in snap['players'])
+                    and now-current.last_snapshot >= 1/45):
                     current.last_snapshot = now
+                    current.snapshot = snap
                     await send(current.guest.ws if current.guest else None, {'t':'snapshot','state':snap})
             elif op == 'finished' and role == 'host' and current.phase == 'fighting':
                 current.phase = 'finished'
+                current.recovering = False
                 await tell(current, {'t':'finished'})
             elif op == 'rematch' and current.phase == 'finished':
                 current.phase = 'lobby'
+                current.recovering = False
+                current.snapshot = None
                 current.host.ready = False
                 if current.guest: current.guest.ready = False
                 await lobby(current)
@@ -205,6 +230,8 @@ async def websocket(request):
                 else:
                     current.guest = None
                     current.phase = 'lobby'
+                    current.recovering = False
+                    current.snapshot = None
                     current.host.ready = False
                     await send(current.host.ws, {'t':'peer_left'})
                     await lobby(current)
@@ -215,8 +242,9 @@ async def websocket(request):
         if current and seat and seat.ws is ws:
             seat.ws = None
             seat.ready = False
+            if role == 'host' and current.phase == 'fighting':
+                current.recovering = True
             await tell(current, {'t':'peer_left','role':role})
-            # Broadcast presence even during fights so the host can recover.
             await lobby(current)
     return ws
 
