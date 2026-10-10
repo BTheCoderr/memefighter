@@ -1,4 +1,4 @@
-# MEME FIGHTER · Online Beta v0.4.1
+# MEME FIGHTER · Online Beta v0.5
 
 A browser arcade fighting game with 4 original vector-art meme-inspired fighters.
 
@@ -44,7 +44,7 @@ Create a GitHub repository containing these files (named `meme-fighter` is recom
 - Health check path: `/healthz`
 - Port: provided by Render's `PORT` variable automatically
 
-The *same* web service hosts the HTML game and WebSocket rooms. **A static Netlify/GitHub Pages deploy alone cannot run this multiplayer relay.** On Render's free tier, the service may sleep when inactive; the first visitor can encounter a startup delay, and websocket connections can be interrupted. Reconnects within a live server process retain room seats. Refreshing the **host** during a fight resets the room to its lobby, because the host runs the simulation; refreshing a guest re-attaches to the current match after the next snapshot. When the service restarts/sleeps, in-memory rooms disappear.
+The *same* web service hosts the HTML game and WebSocket rooms. **A static Netlify/GitHub Pages deploy alone cannot run this multiplayer relay.** On Render's free tier, the service may sleep when inactive; the first visitor can encounter a startup delay, and websocket connections can be interrupted. Reconnects within a live server process retain room seats. Refreshing the **host** during a fight now restores the last server-held combat snapshot, including health, scores, remaining time, round and projectiles. Both players are frozen until the host acknowledges restoration. Refreshing a guest re-attaches to the current match and immediately receives the last snapshot. If the host refreshes before any snapshot arrives, the room safely returns to the lobby. When the service restarts/sleeps, in-memory rooms disappear.
 
 For public scaling/competitive multiplayer, move the game engine to an authoritative dedicated server, add durable rooms/rejoin semantics, abuse prevention, anti-cheat, and multi-instance coordination.
 
@@ -70,6 +70,23 @@ The server broadcasts presence changes even during fights. Browser WebSocket
 connections are checked against the game site's origin; tab switching also
 releases locally held movement/attack keys. GitHub Actions runs Python relay
 tests and validates the inline browser JavaScript syntax.
+
+## Host refresh recovery (v0.5)
+
+The host browser is still authoritative, but the relay remembers the newest valid
+match snapshot for each live room. When the host reloads or briefly loses network:
+
+1. The relay marks the match as recovering and pauses combat on both clients.
+2. The host reconnects using its private session token saved in sessionStorage.
+3. The relay sends its latest snapshot back to the host.
+4. The host restores player movement, health, meter, round, timer, projectiles,
+   combos and other combat fields, then acknowledges readiness.
+5. The relay clears recovery mode and both devices continue from the saved fight.
+
+The guest also receives the most recent snapshot immediately after reconnection.
+A missing first snapshot safely falls back to the lobby. Rooms are still memory-only:
+server restarts, instance switches, expired rooms or cleared browser session storage
+cannot be recovered. Snapshots can be up to one networking tick behind actual play.
 
 ## Security / limits
 
