@@ -11,6 +11,7 @@ import secrets
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlsplit
 from aiohttp import WSMsgType, web
 
 ROOT = Path(__file__).resolve().parent
@@ -73,6 +74,12 @@ async def attach(room, role, token, ws):
     return True
 
 async def websocket(request):
+    # Browser WebSocket upgrades must originate from this game site.
+    origin = request.headers.get('Origin')
+    if origin:
+        parsed = urlsplit(origin)
+        if parsed.scheme not in ('http', 'https') or parsed.netloc.lower() != request.host.lower() or parsed.path not in ('', '/') or parsed.query or parsed.fragment:
+            raise web.HTTPForbidden(text='Cross-origin WebSocket requests are not allowed')
     ws = web.WebSocketResponse(heartbeat=24, max_msg_size=MAX_MESSAGE)
     await ws.prepare(request)
     current = None
@@ -159,6 +166,17 @@ async def websocket(request):
                 if current.guest and current.host.ready and current.guest.ready and is_open(current.host.ws) and is_open(current.guest.ws):
                     current.phase = 'fighting'
                     await tell(current, {'t':'begin','stage':current.stage,'fighters':[current.host.fighter,current.guest.fighter]})
+            elif op == 'reopen' and role == 'host':
+                # Release an abandoned seat, preserving the room code.
+                # An online opponent cannot be displaced through recovery.
+                if current.guest is None or is_open(current.guest.ws):
+                    await send(ws, {'t':'error','message':'The guest must be disconnected before reopening their seat'})
+                else:
+                    current.guest = None
+                    current.host.ready = False
+                    current.phase = 'lobby'
+                    current.last_snapshot = current.last_input = 0
+                    await lobby(current)
             elif op == 'input' and role == 'guest' and current.phase == 'fighting':
                 keys = data.get('keys')
                 if isinstance(keys,list) and len(keys) <= 9 and all(isinstance(k,str) and k in VALID_KEYS for k in keys):
@@ -198,8 +216,8 @@ async def websocket(request):
             seat.ws = None
             seat.ready = False
             await tell(current, {'t':'peer_left','role':role})
-            if current.phase == 'lobby':
-                await lobby(current)
+            # Broadcast presence even during fights so the host can recover.
+            await lobby(current)
     return ws
 
 async def index(request):
