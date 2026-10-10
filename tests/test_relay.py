@@ -97,6 +97,7 @@ class RelayTests(unittest.IsolatedAsyncioTestCase):
         await self.msg(host,'begin');await self.msg(guest,'begin')
         await host.close()
         await self.msg(guest,'peer_left')
+        self.assertEqual((await self.msg(guest,'room'))['phase'],'fighting')
         resumed=await self.socket()
         await self.put(resumed,t='resume',code=h['code'],token=h['token'],playing=False)
         await self.msg(resumed,'seat')
