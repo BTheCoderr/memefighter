@@ -1,4 +1,4 @@
-# MEME FIGHTER · Online Beta v0.4
+# MEME FIGHTER · Online Beta v0.4.1
 
 A browser arcade fighting game with 4 original vector-art meme-inspired fighters.
 
@@ -57,6 +57,19 @@ requirements.txt  # Pinned aiohttp runtime
 render.yaml       # Render Blueprint
 .gitignore        # Local ignored artifacts
 ```
+
+## Room recovery
+
+If your opponent loses connection or closes the browser, their seat stays
+reserved so they can reconnect. The host sees **REOPEN GUEST SEAT** when that
+guest is offline. Pressing it returns the game to the lobby and frees the
+guest seat without changing the room code. It invalidates the previous guest's
+reconnect token, and it cannot remove a still-connected guest.
+
+The server broadcasts presence changes even during fights. Browser WebSocket
+connections are checked against the game site's origin; tab switching also
+releases locally held movement/attack keys. GitHub Actions runs Python relay
+tests and validates the inline browser JavaScript syntax.
 
 ## Security / limits
 
