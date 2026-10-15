@@ -3,7 +3,16 @@
   "compilerOptions": {
     "strict": true,
     "skipLibCheck": true,
-    "types": ["react", "react-native"]
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": [
+      "react",
+      "react-native",
+      "node"
+    ]
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }
