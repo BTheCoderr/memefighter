@@ -1,0 +1,35 @@
+name: Meme Fighter Expo mobile
+on:
+  push:
+    paths:
+      - "mobile/**"
+      - "index.html"
+      - ".github/workflows/mobile-expo.yml"
+  pull_request:
+    paths:
+      - "mobile/**"
+      - "index.html"
+      - ".github/workflows/mobile-expo.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install SDK 54 native dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify bundled engine matches web game
+        run: npm run check:game
+      - name: Invite/link security checks
+        run: npm run test:rooms
+      - name: TypeScript
+        run: npm run typecheck
+      - name: iOS JavaScript export
+        run: npm run export:ios
