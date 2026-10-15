@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Meme Fighter",
+    "slug": "meme-fighter",
+    "owner": "bferrell514",
+    "version": "0.1.0",
+    "scheme": "memefighter",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "com.bthedream.memefighter",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.bthedream.memefighter"
+    },
+    "extra": {}
+  }
+}

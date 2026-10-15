@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 server.log
 *.png
+!mobile/assets/*.png
 patch_game.py
 test_browser_mock.py
 test_online.py
