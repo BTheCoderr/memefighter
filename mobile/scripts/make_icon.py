@@ -56,11 +56,11 @@ def produce():
     # Arcade title directly integrated in the mark.
     label="MEME"
     bbox=d.textbbox((0,0),label,font=font(113),stroke_width=0)
-    d.text(((1024-(bbox[2]-bbox[0]))//2,710),label,
+    d.text(((1024-(bbox[2]-bbox[0]))//2,675),label,
            font=font(113),fill=(250,249,255,255),stroke_width=0)
     label2="FIGHTER"
     bbox=d.textbbox((0,0),label2,font=font(68))
-    d.text(((1024-(bbox[2]-bbox[0]))//2,840),label2,
+    d.text(((1024-(bbox[2]-bbox[0]))//2,806),label2,
            font=font(68),fill=(106,246,215,255))
     im=Image.alpha_composite(im.convert("RGBA"),layer).convert("RGB")
     return im
