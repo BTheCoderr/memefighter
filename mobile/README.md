@@ -25,7 +25,7 @@ Requires Node 20.19+ (prefer Node 22 LTS) and Expo/EAS CLI.
 cd mobile
 npm install
 cp .env.example .env
-# Set EXPO_PUBLIC_MEME_FIGHTER_URL to a real HTTPS service hosting both / and /ws.
+# The tracked .env.example already points to the existing Render HTTPS game and /ws relay.
 npm run test:rooms
 npm run check:game
 npm run typecheck
@@ -41,16 +41,13 @@ Use an EAS **preview** build for reliable physical-phone checks.
 
 ## TestFlight blockers
 
-1. Verify the production multiplayer URL by visiting `/healthz` and playing two phones.
-   A static site without the WebSocket relay is not sufficient. If there is no live
-   Render service, deploy the existing `render.yaml` in the correct Render workspace.
+1. The existing free Render service is `https://meme-fighter-online.onrender.com` in **My Workspace**. The production and preview EAS profiles now embed this public HTTPS origin. Its last known live deployment is the v0.5 server (`bc2975a`). Run the automated live-relay smoke check (`python scripts/smoke_live_relay.py`) and play a match on two physical phones. A successful health endpoint alone is not an end-to-end match test. The free service may cold-start or lose in-memory matches after restarts.
 2. Add reviewed original, rights-cleared 1024 x 1024 nontransparent app artwork as
    `mobile/assets/icon.png`, then set `expo.icon` in `mobile/app.json`.
 3. Confirm the provisional bundle ID `com.bthedream.memefighter` with Apple; run
    `eas init` from `mobile/` and record the existing or new EAS project ID. Never
    link to another app's EAS project.
-4. Configure EAS production environment `EXPO_PUBLIC_MEME_FIGHTER_URL`. Do not
-   place API secrets in EXPO_PUBLIC values.
+4. Both EAS profiles declare the public `EXPO_PUBLIC_MEME_FIGHTER_URL`; no account secrets are included. Do not change it to a static-only site or put credentials in an `EXPO_PUBLIC_` value.
 5. Run `npm run preflight:ios`, `npm run typecheck`, `npx expo-doctor`, and an
    iOS export. Verify music, touch input, crash recovery, offline CPU, live online
    rooms, invite/share, and app relaunch on two physical iPhones.

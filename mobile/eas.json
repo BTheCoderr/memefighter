@@ -6,12 +6,18 @@
   "build": {
     "preview": {
       "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_MEME_FIGHTER_URL": "https://meme-fighter-online.onrender.com"
+      }
     },
     "production": {
       "distribution": "store",
       "environment": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_MEME_FIGHTER_URL": "https://meme-fighter-online.onrender.com"
+      }
     }
   },
   "submit": {
