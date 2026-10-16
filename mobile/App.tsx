@@ -6,38 +6,17 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as Haptics from "expo-haptics";
+import * as ScreenOrientation from "expo-screen-orientation";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { GAME_HTML } from "./src/game.generated";
 import { normalizeRoom, roomFromDeepLink, roomInviteUrl, safeOnlineOrigin } from "./src/rooms";
+import { makeArcadeHtml, makeBridgeScript } from "./src/mobileGameplay";
 
 type Mode = "home" | "solo" | "online";
 type BridgeEvent = { type: "touch" | "finished" | "invite" | "room"; code?: string };
 
 const ORIGIN = safeOnlineOrigin(process.env.EXPO_PUBLIC_MEME_FIGHTER_URL);
-const OFFLINE_HTML = GAME_HTML.replace(
-  "</head>",
-  "<style>.online-box{display:none!important}</style></head>"
-);
-const BRIDGE_SCRIPT = [
-  "(function(){",
-  "if(window.__memeFighterNativeBridge)return;",
-  "window.__memeFighterNativeBridge=true;",
-  "function post(type,code){try{window.ReactNativeWebView.postMessage(JSON.stringify({type:type,code:code}));}catch(e){}}",
-  "document.addEventListener('pointerdown',function(e){if(e.target.closest('.touch-btn'))post('touch');},{passive:true});",
-  "var local=document.getElementById('mode');",
-  "if(local&&location.protocol!=='https:'){var opt=local.querySelector('option[value=local]');if(opt)opt.remove();}",
-  "var codeEl=document.getElementById('room-code');",
-  "if(codeEl){var notify=function(){var c=codeEl.textContent.trim().toUpperCase();if(/^[A-HJ-NP-Z2-9]{6}$/.test(c))post('room',c);};",
-  "new MutationObserver(notify).observe(codeEl,{childList:true,characterData:true,subtree:true});notify();}",
-  "var copy=document.getElementById('copy-room');",
-  "if(copy)copy.addEventListener('click',function(e){",
-  "var c=codeEl&&codeEl.textContent.trim().toUpperCase();",
-  "if(/^[A-HJ-NP-Z2-9]{6}$/.test(c)){e.preventDefault();e.stopImmediatePropagation();post('invite',c);}",
-  "},true);",
-  "var result=document.getElementById('result');",
-  "if(result)new MutationObserver(function(){if(!result.hidden)post('finished');}).observe(result,{attributes:true,attributeFilter:['hidden']});",
-  "})();true;"
-].join("");
+const OFFLINE_HTML = makeArcadeHtml(GAME_HTML, true);
 
 function Control({ label, onPress, tone = "dark" }: {
   label: string; onPress: () => void; tone?: "dark" | "mint" | "pink";
@@ -87,6 +66,15 @@ function FighterApp() {
     return () => subscription.remove();
   }, [mode]);
 
+  useEffect(() => {
+    const lock = mode === "home"
+      ? ScreenOrientation.OrientationLock.PORTRAIT_UP
+      : ScreenOrientation.OrientationLock.LANDSCAPE;
+    // Rotation is native-only; the app continues functioning if a platform refuses it.
+    void ScreenOrientation.lockAsync(lock).catch(() => {});
+    return () => {};
+  }, [mode]);
+
   const webUrl = useMemo(() =>
     ORIGIN ? ORIGIN + (initialRoom ? "/?room=" + encodeURIComponent(initialRoom) : "/") : null,
     [initialRoom]
@@ -131,7 +119,7 @@ function FighterApp() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <StatusBar style="light" backgroundColor="#100d27" />
+      <StatusBar style="light" backgroundColor="#100d27" hidden={mode !== "home"} />
       {mode === "home" ? (
         <ScrollView contentContainerStyle={styles.home}>
           <Text style={styles.kicker}>ARCADE / MOBILE BETA 001</Text>
@@ -219,9 +207,13 @@ function FighterApp() {
               originWhitelist={["*"]}
               javaScriptEnabled
               domStorageEnabled
+              // The remote game must remain same-origin with the actual /ws relay.
+              // The offline engine never loads arbitrary remote pages.
               startInLoadingState
-              injectedJavaScript={BRIDGE_SCRIPT}
+              injectedJavaScript={makeBridgeScript(mode === "online" && initialRoom === null)}
               onMessage={onGameMessage}
+              allowsInlineMediaPlayback
+              mediaPlaybackRequiresUserAction={false}
               onShouldStartLoadWithRequest={request => {
                 if (request.url.startsWith("about:") || request.url.startsWith("data:")) return true;
                 if (mode === "solo") return false;

@@ -5,15 +5,25 @@
     "owner": "bferrell514",
     "version": "0.1.0",
     "scheme": "memefighter",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "dark",
     "ios": {
       "bundleIdentifier": "com.bthedream.memefighter",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "requireFullScreen": true
     },
     "android": {
       "package": "com.bthedream.memefighter"
     },
-    "extra": {}
+    "extra": {},
+    "icon": "./assets/icon.png",
+    "plugins": [
+      [
+        "expo-screen-orientation",
+        {
+          "initialOrientation": "PORTRAIT"
+        }
+      ]
+    ]
   }
 }
