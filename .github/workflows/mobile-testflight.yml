@@ -1,0 +1,73 @@
+name: Meme Fighter iOS TestFlight (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit_to_testflight:
+        description: "Also upload the signed build to TestFlight (requires App Store Connect setup)"
+        type: boolean
+        required: true
+        default: false
+      apple_identity_verified:
+        description: "I verified the Apple bundle ID, original icon candidate and EAS app ownership"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: meme-fighter-ios-release
+  cancel-in-progress: false
+
+jobs:
+  ios-store-build:
+    if: ${{ inputs.apple_identity_verified }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PUBLIC_MEME_FIGHTER_URL: https://meme-fighter-online.onrender.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Confirm Expo token (do not start a paid build without credentials)
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Repository secret EXPO_TOKEN is required."
+            exit 1
+          fi
+      - name: Install and run test suite
+        run: |
+          npm install --no-audit --no-fund
+          python -m pip install pillow==11.3.0
+          npm run check:icon
+          npm run check:game
+          npm run test:rooms
+          npm run test:shell
+          npm run typecheck
+          npx expo install --check
+          npx --yes expo-doctor
+          npm run export:ios
+      - name: Release preflight
+        env:
+          SUBMIT_TO_TESTFLIGHT: ${{ inputs.submit_to_testflight }}
+        run: |
+          npm run preflight:ios
+          if [ "$SUBMIT_TO_TESTFLIGHT" = "true" ]; then
+            node -e 'const c=require("./eas.json");if(!/^\\d+$/.test(String(c.submit?.production?.ios?.ascAppId||""))){console.error("Set numeric ascAppId in mobile/eas.json before upload");process.exit(1)}'
+          fi
+      - name: Build signed App Store IPA on EAS
+        run: npx --yes eas-cli build --platform ios --profile production --non-interactive --wait
+      - name: Upload to TestFlight (opt-in)
+        if: ${{ inputs.submit_to_testflight }}
+        run: npx --yes eas-cli submit --platform ios --profile production --latest --non-interactive
