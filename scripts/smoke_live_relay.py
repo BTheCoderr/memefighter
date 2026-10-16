@@ -35,7 +35,13 @@ async def wait_for_service(session):
                 page = await response.text()
                 if response.status != 200 or 'id="create-room"' not in page or 'id="game"' not in page:
                     raise RuntimeError("Hosted page is not the Meme Fighter game")
-            print("PASS public HTTPS /healthz and hosted game HTML")
+            for path, phrase in (("/privacy", "Your fights. Your privacy."),
+                                 ("/support", "Need backup in the arena?")):
+                async with session.get(ORIGIN + path, timeout=ClientTimeout(total=20)) as response:
+                    html = await response.text()
+                    if response.status != 200 or phrase not in html:
+                        raise RuntimeError(f"Public {path} unavailable or invalid: HTTP {response.status}")
+            print("PASS public HTTPS /healthz, game HTML, privacy and support")
             return
         except Exception as exc:
             if attempt == 8:
