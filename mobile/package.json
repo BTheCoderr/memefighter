@@ -12,7 +12,9 @@
     "test:rooms": "node --experimental-strip-types --test tests/rooms.test.ts",
     "typecheck": "tsc --noEmit",
     "export:ios": "expo export --platform ios",
-    "preflight:ios": "node scripts/preflight.mjs"
+    "preflight:ios": "node scripts/preflight.mjs",
+    "check:icon": "python3 scripts/make_icon.py --check",
+    "test:shell": "node --experimental-strip-types --test tests/mobileGameplay.test.ts"
   },
   "dependencies": {
     "expo": "~54.0.37",
@@ -21,7 +23,8 @@
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
-    "react-native-webview": "13.15.0"
+    "react-native-webview": "13.15.0",
+    "expo-screen-orientation": "~9.0.9"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
