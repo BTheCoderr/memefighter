@@ -254,6 +254,12 @@ async def index(request):
 async def health(request):
     return web.json_response({'ok':True,'rooms':len(ROOMS)})
 
+async def privacy(request):
+    return web.FileResponse(ROOT / 'privacy.html')
+
+async def support(request):
+    return web.FileResponse(ROOT / 'support.html')
+
 async def cleanup(app):
     async def worker():
         while True:
@@ -273,6 +279,8 @@ def create_app():
     app = web.Application(client_max_size=MAX_MESSAGE)
     app.router.add_get('/',index)
     app.router.add_get('/healthz',health)
+    app.router.add_get('/privacy',privacy)
+    app.router.add_get('/support',support)
     app.router.add_get('/ws',websocket)
     app.cleanup_ctx.append(cleanup)
     return app
