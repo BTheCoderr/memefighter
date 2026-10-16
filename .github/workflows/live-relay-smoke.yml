@@ -1,0 +1,32 @@
+name: Meme Fighter live multiplayer smoke
+
+on:
+  push:
+    paths:
+      - "mobile/eas.json"
+      - "scripts/smoke_live_relay.py"
+      - ".github/workflows/live-relay-smoke.yml"
+  pull_request:
+    paths:
+      - "mobile/eas.json"
+      - "scripts/smoke_live_relay.py"
+      - ".github/workflows/live-relay-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Confirm hosted game and two-player WebSocket relay
+        env:
+          MEME_FIGHTER_ORIGIN: https://meme-fighter-online.onrender.com
+        run: python scripts/smoke_live_relay.py

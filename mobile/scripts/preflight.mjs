@@ -6,8 +6,20 @@ const config = JSON.parse(readFileSync(resolve(root, "app.json"), "utf8")).expo;
 const eas = JSON.parse(readFileSync(resolve(root, "eas.json"), "utf8"));
 let failures = 0;
 function check(ok, label) { console.log((ok ? "PASS " : "FAIL ") + label); if (!ok) failures++; }
-const origin = process.env.EXPO_PUBLIC_MEME_FIGHTER_URL || "";
-check(/^https:\/\/[^/\s]+\/?$/.test(origin) && !origin.includes("@"), "HTTPS game + relay origin configured");
+// Production/preview Expo environment variables are public build-time values;
+// the live Render URL is deliberately checked from eas.json so local preflight
+// doesn't depend on a developer's untracked .env file.
+function validOrigin(candidate) {
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "https:" && url.origin === candidate &&
+      !url.username && !url.password && !url.search && !url.hash;
+  } catch { return false; }
+}
+const previewOrigin = eas.build?.preview?.env?.EXPO_PUBLIC_MEME_FIGHTER_URL || "";
+const productionOrigin = eas.build?.production?.env?.EXPO_PUBLIC_MEME_FIGHTER_URL || "";
+check(validOrigin(previewOrigin) && previewOrigin === productionOrigin,
+  "Preview and production builds use the same explicit HTTPS online relay origin");
 check(Boolean(config.extra?.eas?.projectId), "EAS project ID linked");
 check(Boolean(config.ios?.bundleIdentifier), "iOS bundle ID selected and verified with Apple");
 check(eas.build?.production?.distribution === "store", "App Store signed production profile");
