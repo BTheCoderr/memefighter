@@ -64,7 +64,7 @@ jobs:
         run: |
           npm run preflight:ios
           if [ "$SUBMIT_TO_TESTFLIGHT" = "true" ]; then
-            node -e 'const c=require("./eas.json");if(!/^\\d+$/.test(String(c.submit?.production?.ios?.ascAppId||""))){console.error("Set numeric ascAppId in mobile/eas.json before upload");process.exit(1)}'
+            node -e 'const c=require("./eas.json");if(!/^[0-9]+$/.test(String(c.submit?.production?.ios?.ascAppId||""))){console.error("Set numeric ascAppId in mobile/eas.json before upload");process.exit(1)}'
           fi
       - name: Build signed App Store IPA on EAS
         run: npx --yes eas-cli build --platform ios --profile production --non-interactive --wait
