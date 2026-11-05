@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#195945">
+<meta name="description" content="Explore a colorful 3D dinosaur world with Ermias! Collect eggs, befriend dinosaurs and build Dino Camp.">
+<title>Ermias and the Dino World · Rescue Adventure V2</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overscroll-behavior:none}body{background:#0f3b36;color:#fff;font-family:ui-rounded,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button{font:inherit;cursor:pointer;touch-action:manipulation}.shell{height:100%;height:100dvh;max-width:1080px;margin:auto;position:relative;overflow:hidden;background:linear-gradient(#95e4fa,#6bcb8d);isolation:isolate;touch-action:none}#view{width:100%;height:100%;display:block;touch-action:none}.hud{position:absolute;inset:0;pointer-events:none}.top{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;padding:10px;display:flex;align-items:flex-start;justify-content:space-between;gap:7px}.logo{display:flex;align-items:center;gap:8px;border:2px solid #fff9;background:#185846df;border-radius:16px;box-shadow:0 5px 15px #245b544a;padding:9px 11px;min-width:0}.logo strong{font-size:14px;line-height:1.05;display:block;text-shadow:0 1px #174635}.logo small{font-weight:600;display:block;margin-top:4px;color:#e4f5c7;font-size:10px}.counters{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;max-width:55%}.counter{background:#fffdefef;border:2px solid white;border-radius:11px;color:#315c48;font-weight:850;font-size:12px;padding:7px 8px;white-space:nowrap;box-shadow:0 4px 13px #1749352b}.mission{position:absolute;left:10px;top:76px;max-width:300px;width:min(80%,300px);background:#fffdf0f2;color:#285b47;border:2px solid white;box-shadow:0 5px 16px #2a664030;border-radius:17px;padding:11px 12px}.mission .kicker{font-size:10px;color:#38916c;font-weight:900;letter-spacing:.1em}.mission #goal{font-size:13px;font-weight:850;margin-top:3px;line-height:1.25}.mission #tip{font-size:11px;font-weight:550;margin-top:5px;color:#6b8c79;line-height:1.3}.track{height:7px;border-radius:30px;background:#e0e9c7;margin-top:8px;overflow:hidden}.track div{height:100%;background:linear-gradient(90deg,#67ce8d,#fbc84a);width:0;transition:width .4s}.level{position:absolute;right:12px;top:89px;background:#2d7850c8;color:#fff;border:1px solid #ffffff55;border-radius:10px;padding:6px 8px;font-size:10px;font-weight:800;white-space:nowrap}.bottom{position:absolute;left:0;bottom:env(safe-area-inset-bottom,0px);right:0;display:flex;align-items:end;justify-content:space-between;padding:12px;gap:8px}.joystick{width:118px;height:118px;flex:0 0 118px;border:3px solid #ffffffc0;border-radius:50%;background:#ffffff5e;box-shadow:inset 0 0 10px #ffffff58,0 5px 18px #1d554329;pointer-events:auto;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}.joystick:before{content:"MOVE";position:absolute;left:50%;top:10px;transform:translateX(-50%);font-size:10px;font-weight:900;letter-spacing:.1em;color:#32645199}.nub{width:57px;height:57px;border-radius:50%;background:linear-gradient(145deg,#fff4a4,#ffaf39);border:4px solid #fff8d9;box-shadow:0 5px 7px #805d2b38;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}.buttons{display:flex;gap:7px;align-items:end;pointer-events:auto}.act{border:3px solid #fffdf0;border-radius:19px;background:linear-gradient(#ffe787,#fdb63a);color:#6e4915;font-size:15px;font-weight:950;min-width:88px;min-height:70px;box-shadow:0 6px 0 #d88d32,0 10px 17px #376c393c;padding:8px}.act small{display:block;font-size:11px;margin-top:3px;font-weight:850}.go{background:linear-gradient(#ffffff,#b7ffda);color:#226849;min-width:72px;box-shadow:0 6px 0 #70c79c,0 10px 17px #376c393c}.toast{position:absolute;left:50%;bottom:155px;transform:translateX(-50%);background:#175748f3;border:2px solid #ffffff88;color:white;padding:10px 15px;border-radius:25px;font-weight:800;font-size:13px;white-space:nowrap;max-width:90%;text-align:center;opacity:0;transition:opacity .2s;box-shadow:0 7px 16px #16382b2c}.toast.visible{opacity:1}.settings{position:absolute;top:163px;right:11px;display:flex;gap:6px;pointer-events:auto;flex-direction:column}.tiny{width:36px;height:36px;border-radius:13px;background:#fffdf3df;border:2px solid white;font-size:17px}.overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(150deg,#1e7a65eb,#123a4be9);padding:20px;z-index:5}.overlay.hidden{display:none}.panel{width:min(100%,420px);text-align:center;border:4px solid #fff;background:linear-gradient(180deg,#fffcde,#fff6e2);border-radius:28px;box-shadow:0 22px 48px #092f2f8c;padding:25px 22px;color:#25674d}.panel .hero{font-size:51px;letter-spacing:4px;filter:drop-shadow(0 5px 4px #26704655)}.panel h1{font-size:clamp(26px,6vw,39px);line-height:.98;margin:14px 0 8px;color:#e69b28;text-shadow:1px 2px #fff,2px 3px #42724e;font-weight:1000}.panel h1 span{color:#319e57}.panel p{line-height:1.45;color:#527b63;font-size:14px;margin:12px 0 18px}.panel button{border:0;background:linear-gradient(#fff082,#ffb342);border-radius:15px;color:#6b4317;font-weight:950;padding:13px 26px;box-shadow:0 5px 0 #db8f32;font-size:17px}.panel .subtitle{color:#63927e;font-weight:750;font-size:11px;display:block;margin-top:16px}.panel a{display:block;margin-top:14px;color:#32796c;font-weight:750;font-size:12px}.status{font-weight:700;font-size:12px;color:#7c947d;margin-top:8px}.end{display:none}.end.show{display:grid}.tag{border-radius:20px;background:#f8e6ae;display:inline-block;color:#8d6b26;font-size:11px;font-weight:850;padding:5px 10px;margin-top:4px}@media(min-width:760px){.shell{border-left:7px solid #154e43;border-right:7px solid #154e43}.joystick{width:124px;height:124px;flex-basis:124px}.mission{top:74px}.level{top:89px}}@media(max-width:360px){.mission{top:79px;max-width:72%}.counter{font-size:11px;padding:5px}.logo strong{font-size:12px}.level{top:164px}.act{min-width:75px}.go{min-width:65px}.joystick{width:99px;height:99px;flex-basis:99px}}
+
+/* V2 story, discovery and action layers */
+.story{position:absolute;inset:0;z-index:9;background:#163b37b8;display:grid;place-items:center;padding:20px;backdrop-filter:blur(4px)}
+.story.hidden{display:none}
+.storycard{width:min(100%,390px);background:linear-gradient(180deg,#fffde7,#fdf2d9);border:4px solid white;border-radius:27px;box-shadow:0 20px 45px #102e2680;padding:24px 20px;text-align:center;color:#31644c}
+.storycard .storyemoji{font-size:60px;line-height:1.25;animation:bounceegg .55s ease-in-out infinite alternate}
+.storycard h2{font-size:25px;line-height:1.1;color:#1e9368;margin:12px 0 7px}
+.storycard p{color:#5e846c;line-height:1.5;font-size:14px;font-weight:600}
+.storycard button{margin-top:8px;border:0;border-radius:16px;background:linear-gradient(#ffe789,#ffb443);padding:12px 24px;color:#6c471f;font-size:16px;font-weight:900;box-shadow:0 5px #cb8738}
+@keyframes bounceegg{from{transform:rotate(-9deg) translateY(4px)}to{transform:rotate(9deg) translateY(-8px)}}
+#jump{min-width:60px;width:65px;font-size:20px;padding:5px;border-radius:18px;background:linear-gradient(#eefbff,#b5defb);color:#24618c;box-shadow:0 6px 0 #77b7e8}
+#jump small{font-size:10px}
+@media(max-width:390px){#jump{min-width:53px;width:55px}.buttons{gap:4px}.act{min-width:73px;padding:6px}.go{min-width:63px}}
+/* Touch interaction never scrolls the page; improved visual hierarchy on phone */
+#view,.buttons,.bottom,.joystick{touch-action:none}
+</style>
+</head>
+<body>
+<main class="shell" id="shell">
+<canvas id="view" aria-label="3D Dino Meadow adventure game"></canvas>
+<div class="hud">
+<div class="top"><div class="logo"><span style="font-size:28px">🦖</span><div><strong>Ermias & the<br>Dino World</strong><small>3D Adventure · Dino Meadow</small></div></div><div id="counts" class="counters"></div></div>
+<div class="mission"><div class="kicker">⭐ YOUR ADVENTURE</div><div id="goal">Get ready to explore!</div><div id="tip">Find eggs, stars and wood.</div><div class="track"><div id="progress"></div></div></div>
+<div class="level">🌈 LEVEL 1</div><div class="settings"><button id="sound" class="tiny" aria-label="Toggle sound" title="Sound off">🔇</button><button id="reset" class="tiny" aria-label="Restart" title="Restart adventure">↻</button></div>
+<div class="toast" id="toast"></div>
+<div class="bottom"><div class="joystick" id="joystick" aria-label="Movement joystick"><div class="nub" id="nub"></div></div><div class="buttons"><button class="act go" id="go">🧭<small>GO!</small></button><button class="act" id="act">✨<small>Explore</small></button><button class="act" id="jump">⬆️<small>Jump</small></button></div></div>
+</div>
+<div class="overlay" id="cover"><div class="panel"><div class="hero">🌴🦖🥚</div><div class="tag">An adventure made for Ermias 💛</div><h1>ERMIAS<br><span>& THE DINO WORLD</span></h1><p>A baby dinosaur needs your help! Hatch a mystery egg, make a new little friend, ride Rexy through the jungle, then build Dino Camp with Dad.</p><button id="play" disabled>🦕 Loading World...</button><div class="status" id="loading">Getting the dinosaurs ready</div><div class="subtitle">Rescue story · Baby dinosaur companion · Ride Rexy · Jump!</div><a href="./3d.html">Having trouble? Play the previous 3D demo</a></div></div>
+<div class="story hidden" id="story" role="dialog" aria-modal="true" aria-labelledby="story-title"><div class="storycard"><div class="storyemoji" id="story-emoji">🥚</div><h2 id="story-title">A Dinosaur Adventure</h2><p id="story-text">There's a mystery to solve!</p><button id="story-next">Let's go!</button></div></div>
+<div class="overlay end" id="ending"><div class="panel"><div class="hero">🎉🏡🦕</div><h1>YOU DID IT,<br><span>ERMIAS!</span></h1><p>All three dinosaur friends are happy and Dino Camp is built! Dad is proud of you. 💛</p><button id="again">🌈 Play Again</button><div class="subtitle">The Rainbow Gate is open · Rainbow Volcano coming later 🌋</div></div></div>
+</main>
+<script type="module">
+(async function(){
+const $=id=>document.getElementById(id),cover=$('cover'),play=$('play'),loading=$('loading'),canvas=$('view'),act=$('act'),nub=$('nub'),joystick=$('joystick');
+let THREE;
+try{THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js');}catch(err){
+ loading.textContent='Could not load the 3D engine. Check internet connection, then refresh.';
+ play.disabled=true;play.textContent='🌧️ Connection needed';return;
+}
+let renderer;
+try{
+renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance',alpha:false});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+}catch(err){
+ loading.textContent='3D graphics are not supported on this browser. Try Safari or the original demo.';
+ play.disabled=true;play.textContent='3D unavailable';return;
+}
+const scene=new THREE.Scene();scene.background=new THREE.Color('#97ddf4');scene.fog=new THREE.Fog('#a2e5ed',30,75);
+scene.add(new THREE.HemisphereLight(0xf5fcff,0x4d9967,2.4));
+const sun=new THREE.DirectionalLight(0xfff4cc,2.3);sun.position.set(-15,26,15);scene.add(sun);
+const camera=new THREE.OrthographicCamera(-12,12,12,-12,.1,200);
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+const mat=(color,roughness=1)=>new THREE.MeshStandardMaterial({color,roughness,flatShading:true});
+const M={grass:mat('#6dbf69'),path:mat('#e9c486'),wood:mat('#a56b3a'),darkWood:mat('#78502f'),leaf:mat('#3caa66'),leaf2:mat('#5bc46a'),leaf3:mat('#318f5d'),water:mat('#65cfe8',.36),cream:mat('#fff3d3'),gold:mat('#ffe066'),eye:mat('#1c2b32'),hair:mat('#252425'),skin:mat('#ae7550'),white:mat('#fff8ee'),blue:mat('#3c9add'),orange:mat('#fa9e36'),red:mat('#e95c5a')};
+function add(parent,geo,material,x=0,y=0,z=0){const o=new THREE.Mesh(geo,material);o.position.set(x,y,z);parent.add(o);return o}
+function orb(parent,c,x,y,z,sx=1,sy=1,sz=1){const o=add(parent,new THREE.SphereGeometry(1,12,8),typeof c==='string'?mat(c):c,x,y,z);o.scale.set(sx,sy,sz);return o}
+function cyl(parent,c,x,y,z,r1,r2,h,segments=9){return add(parent,new THREE.CylinderGeometry(r1,r2,h,segments),typeof c==='string'?mat(c):c,x,y,z)}
+function cone(parent,c,x,y,z,r,h,n=7){return add(parent,new THREE.ConeGeometry(r,h,n),typeof c==='string'?mat(c):c,x,y,z)}
+function bar(parent,c,a,b,r=.1){let va=new THREE.Vector3(...a),vb=new THREE.Vector3(...b),d=vb.clone().sub(va);let o=add(parent,new THREE.CylinderGeometry(r,r,d.length(),7),c);o.position.copy(va.add(vb).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o}
+function seeded(n){const q=Math.sin(n*119.27+34.24)*43758.47;return q-Math.floor(q)}
+const world=new THREE.Group();scene.add(world);
+add(world,new THREE.PlaneGeometry(48,48),M.grass,0,-.08,0).rotation.x=-Math.PI/2;
+const border=add(world,new THREE.CylinderGeometry(33,34,3,12),mat('#65995a'),0,-1.62,0);
+const islandTop=add(world,new THREE.CylinderGeometry(30,30,0.4,14),mat('#7cc973'),0,-.25,0);
+function patch(x,z,r,color){
+const o=add(world,new THREE.CircleGeometry(r,10),mat(color),x,-.06,z);
+o.rotation.x=-Math.PI/2;
+}
+for(let i=0;i<40;i++){const x=(seeded(i+5)-.5)*42,z=(seeded(i+66)-.5)*42;if(x*x+z*z>90){patch(x,z,.45+seeded(i+29)*1.1,i%3?'#84d477':'#98dc7f')}}
+for(let i=0;i<45;i++){
+const a=i*.85,r=21+seeded(i+5)*3,x=Math.cos(a)*r,z=Math.sin(a)*r;
+cyl(world,M.wood,x,1,z,.27,.35,2,7);
+const g=new THREE.Group();g.position.set(x,1.5,z);world.add(g);
+orb(g,i%2?M.leaf:M.leaf2,0,1.1,0,1.1,1.45,1.1);orb(g,i%2?M.leaf2:M.leaf3,0,2.2,0,.77,.85,.77);
+}
+for(let i=0;i<55;i++){
+let x=(seeded(i+98)-.5)*38,z=(seeded(i+153)-.5)*38;
+if(Math.hypot(x,z)<5)continue;
+orb(world,i%3?mat('#f8f5be'):mat('#e8a6ce'),x,.05,z,.1,.11,.1);
+}
+for(let i=0;i<13;i++){let x=-22+seeded(i+124)*44,z=-22+seeded(i+412)*44;if(Math.hypot(x,z)<8)continue;const rock=orb(world,mat(i%2?'#8aa4a0':'#8eac9c'),x,.24,z,.7,.4,.53);rock.rotation.y=i*.8;}
+const base=new THREE.Group();world.add(base);base.position.set(3,0,2);
+patch(3,2,2.9,'#e8c68a');
+for(let i=0;i<6;i++)bar(base,M.darkWood,[Math.cos(i)*2,.18,Math.sin(i)*2],[Math.cos(i+.5)*2,.18,Math.sin(i+.5)*2],.1);
+let tent=cone(base,mat('#f4b760'),0,1.45,0,2.4,2.7,4);tent.rotation.y=Math.PI/4;
+const flagBar=cyl(base,M.wood,-2,2.1,-1,.07,.08,4.1),flag=orb(base,M.gold,-1.6,3.7,-1,.5,.23,.04);
+let upgraded=false;
+function buildCamp(){
+if(upgraded)return;
+upgraded=true;tent.visible=false;
+const house=new THREE.Group();base.add(house);
+add(house,new THREE.BoxGeometry(3.5,2.1,3.2),mat('#d79b57'),0,1.45,0);
+const roof=cone(house,mat('#ee814b'),0,3.05,0,2.7,1.85,4);roof.rotation.y=Math.PI/4;
+add(house,new THREE.BoxGeometry(.9,1.45,.2),mat('#714a30'),0,1.06,1.68);
+for(let i=-1;i<=1;i+=2){orb(house,M.gold,i*1.15,1.85,1.68,.27,.27,.10);}
+for(let i=0;i<6;i++){const a=i*Math.PI/3;orb(house,M.gold,Math.sin(a)*2.2,.4,Math.cos(a)*2.2,.13,.13,.13);}
+}
+function makeKid(adult=false){
+const g=new THREE.Group(),body=new THREE.Group();g.add(body);
+const scale=adult?1.28:1;body.scale.setScalar(scale);
+const skin=mat(adult?'#9f6948':'#b87a55'),shirt=mat(adult?'#d7c18d':'#f9f1ca'),vest=mat(adult?'#b58f5d':'#1aaf95');
+orb(body,shirt,0,1.25,0,.41,.54,.28);
+orb(body,vest,-.28,1.28,.11,.16,.43,.29);orb(body,vest,.28,1.28,.11,.16,.43,.29);
+orb(body,mat(adult?'#817651':'#e6b02d'),0,1.21,-.35,.45,.5,.2);
+orb(body,skin,0,2.05,.07,.46,.49,.40);
+orb(body,M.white,-.18,2.08,.42,.12,.14,.08);orb(body,M.white,.18,2.08,.42,.12,.14,.08);
+orb(body,M.eye,-.18,2.08,.49,.06,.08,.06);orb(body,M.eye,.18,2.08,.49,.06,.08,.06);
+orb(body,mat('#e09b79'),0,1.91,.46,.13,.075,.05);
+orb(body,M.hair,0,2.39,-.045,.47,.22,.41);
+if(adult){
+orb(body,M.hair,0,1.83,.30,.36,.17,.22);
+const brim=cyl(body,mat('#9a7647'),0,2.52,0,.59,.59,.09,12);
+cyl(body,mat('#b8915a'),0,2.63,0,.39,.39,.21,12);
+}else{
+for(let k=0;k<8;k++){
+const a=k/7*Math.PI*1.15+Math.PI*.1,x=Math.cos(a)*.34,z=-.19-Math.sin(a)*.22;
+let from=[x,2.51,z],to=[x*.96,1.45,z-.22];
+bar(body,M.hair,from,to,.065);
+for(let t=0;t<3;t++)orb(body,M.hair,x*(1-t*.05),2.25-t*.3,z-.07*t,.082,.11,.08);
+}
+}
+const arms=[],legs=[];
+for(const s of [-1,1]){
+const arm=new THREE.Group();arm.position.set(.48*s,1.48,0);body.add(arm);
+orb(arm,shirt,.11*s,-.32,.05,.16,.35,.16);orb(arm,skin,.13*s,-.6,.05,.135,.17,.13);
+arms.push(arm);
+const leg=new THREE.Group();leg.position.set(.21*s,.9,0);body.add(leg);
+orb(leg,mat('#b69360'),0,-.32,0,.18,.35,.18);orb(leg,mat(adult?'#754e36':'#f47f35'),0,-.7,.13,.22,.16,.33);
+legs.push(leg);
+}
+return{group:g,body,arms,legs};
+}
+const ermias=makeKid(false);world.add(ermias.group);
+const dad=makeKid(true);dad.group.position.set(-3,0,-1.5);dad.group.rotation.y=.7;world.add(dad.group);
+function makeDino(kind,color){
+const g=new THREE.Group(),body=new THREE.Group();g.add(body);const c=mat(color),light=mat('#e9d6a1'),dark=mat('#276b58');
+orb(body,c,0,1.05,0,1.2,.72,.76);
+for(let s of [-1,1])for(let z of [-.48,.48]){cyl(body,c,s*.68,.48,z,.24,.28,.82,8);orb(body,c,s*.68,.18,z+.12,.36,.17,.39);}
+bar(body,c,[0,1.3,-.5],[0,1.04,-2.9],.3);
+orb(body,c,0,1.4,1.15,.65,.61,.69);
+orb(body,light,0,1.08,1.62,.48,.26,.44);
+for(let s of [-1,1]){
+orb(body,M.white,s*.37,1.59,1.66,.17,.18,.10);
+orb(body,M.eye,s*.36,1.58,1.76,.085,.10,.06);
+orb(body,mat('#f49ca3'),s*.49,1.30,1.66,.16,.09,.07);
+}
+if(kind==='Rexy'){
+orb(body,c,0,1.4,1.53,.69,.59,.66);
+for(let s of [-1,1]){bar(body,c,[s*.8,1.23,.65],[s*.91,.78,1.07],.13);orb(body,c,s*.96,.75,1.1,.19,.13,.22);}
+for(let i=0;i<5;i++){const tooth=cone(body,M.white,-.36+i*.18,1.05,2.03,.07,.19);tooth.rotation.x=Math.PI;}
+}else if(kind==='Trixie'){
+orb(body,c,0,1.68,.85,.97,.89,.28);
+for(let s of [-1,1]){const horn=cone(body,light,s*.5,2.17,1.33,.18,.74);horn.rotation.x=.35;}
+cone(body,light,0,1.7,2.03,.17,.5).rotation.x=Math.PI*.42;
+}else{
+for(let i=0;i<5;i++){const plate=cone(body,mat(i%2?'#efb354':'#f8da71'),0,1.77,1.1-i*.59,.47,.97,4);plate.rotation.y=Math.PI/4;}
+for(let s of [-1,1]){const spike=cone(body,light,s*.23,1.4,-2.7,.13,.7);spike.rotation.z=s*.8;}
+}
+return g;
+}
+const dinoData=[
+{x:-12,z:-8,name:'Rexy',kind:'Rexy',color:'#ef9753',fed:false},
+{x:12,z:-8,name:'Trixie',kind:'Trixie',color:'#67a9e7',fed:false},
+{x:12,z:12,name:'Spike',kind:'Spike',color:'#77be71',fed:false}
+];
+dinoData.forEach((d,i)=>{d.object=makeDino(d.kind,d.color);world.add(d.object);d.object.position.set(d.x,0,d.z);d.object.rotation.y=i*1.5});
+function collectible(type,x,z){
+const group=new THREE.Group();group.position.set(x,0,z);world.add(group);
+const stand=cyl(group,mat('#f4df99'),0,.11,0,.7,.7,.16,12);
+if(type==='egg'){
+orb(group,M.cream,0,.72,0,.48,.68,.49);
+for(let i=0;i<5;i++){let a=i*2.4;orb(group,mat(i%2?'#60cee3':'#edb6dd'),Math.sin(a)*.43,.45+(i%3)*.25,Math.cos(a)*.40,.12,.16,.10);}
+}else if(type==='wood'){
+for(let i=0;i<3;i++){let log=cyl(group,M.wood,0,.43+i*.29,0,.22,.23,1.3,10);log.rotation.z=Math.PI/2;log.rotation.y=i*.5;}
+}else if(type==='star'){
+const starShape=new THREE.Shape();for(let i=0;i<10;i++){let a=i*Math.PI/5-Math.PI/2,r=i%2?.3:.66,px=Math.cos(a)*r,py=Math.sin(a)*r;if(!i)starShape.moveTo(px,py);else starShape.lineTo(px,py)}starShape.closePath();
+const star=add(group,new THREE.ExtrudeGeometry(starShape,{depth:.18,bevelEnabled:true,bevelSize:.05,bevelThickness:.06,bevelSegments:1,steps:1}),M.gold,0,1.13,0);
+star.rotation.y=Math.PI/10;
+}else{
+orb(group,M.leaf2,0,.36,0,.7,.34,.63);
+for(let i=0;i<5;i++){const a=i*2.4;orb(group,M.red,Math.sin(a)*.4,.68+i%2*.12,Math.cos(a)*.43,.18,.18,.18);}
+}
+return{type,x,z,object:group,got:false};
+}
+const items=[
+collectible('egg',-7,-4),collectible('egg',9,-5),collectible('egg',9,14),collectible('egg',-10,9),
+collectible('wood',-7,4),collectible('wood',2,-9),collectible('wood',13,3),collectible('wood',-3,14),collectible('wood',-13,-1),
+collectible('star',-4,-12),collectible('star',-12,12),collectible('star',8,9),collectible('star',5,-14),
+collectible('berry',-12,-8),collectible('berry',11,-4),collectible('berry',13,15),collectible('berry',-5,13)
+];
+const bag={egg:0,wood:0,star:0,berry:0},kid={x:0,z:0},keys={};
+const state={started:false,complete:false,sound:false,target:null,last:0,phase:0,toastEnd:0};
+const quest={stage:0,hatched:false,riding:false,gateReached:false,jump:0,jumpDuration:.65,dialog:false};
+let storyCallback=null;
+const rainbowGate={x:15,z:12};
+const rexy=dinoData[0];
+const pip=new THREE.Group();world.add(pip);pip.visible=false;
+pip.add(makeDino('Trixie','#70d6ba'));pip.scale.setScalar(.36);
+const rider=makeKid(false);rider.group.scale.setScalar(.59);rider.group.position.set(0,1.75,0);rexy.object.add(rider.group);rider.group.visible=false;
+const gate=new THREE.Group();gate.position.set(rainbowGate.x,0,rainbowGate.z);world.add(gate);
+const rainbowColors=['#f98e89','#f3bf54','#faec7c','#7bd9a0','#76cef1','#b995ee'];
+for(let k=0;k<rainbowColors.length;k++){
+ const arcPoints=[];const radius=2.9-k*.29;
+ for(let j=0;j<=24;j++){const a=Math.PI*j/24;arcPoints.push(new THREE.Vector3(Math.cos(a)*radius,Math.sin(a)*radius+.25,-k*.04))}
+ const arcCurve=new THREE.CatmullRomCurve3(arcPoints);
+ const arc=add(gate,new THREE.TubeGeometry(arcCurve,30,.12,6,false),mat(rainbowColors[k]));
+}
+orb(gate,M.gold,-2.9,.32,0,.4,.34,.4);orb(gate,M.gold,2.9,.32,0,.4,.34,.4);
+const burst=[];const burstPalette=['#ffe177','#ef8e98','#83e6df','#fffdf1','#c7a9fd'];
+function sparkles(x,z,num=28){for(let i=0;i<num;i++){
+ const material=new THREE.MeshBasicMaterial({color:burstPalette[i%burstPalette.length]});
+ const p=add(world,new THREE.SphereGeometry(.08+seeded(i+85)*.06,6,4),material,x,.4,z);
+ burst.push({o:p,vx:(seeded(i+2)-.5)*6,vz:(seeded(i+16)-.5)*6,vy:3+seeded(i+38)*3,life:1.2});
+}}
+function showStory(icon,title,description,button,callback){
+ $('story-emoji').textContent=icon;$('story-title').textContent=title;$('story-text').textContent=description;
+ $('story-next').textContent=button;storyCallback=callback;quest.dialog=true;$('story').classList.remove('hidden');
+}
+$('story-next').addEventListener('click',()=>{
+ $('story').classList.add('hidden');quest.dialog=false;const fn=storyCallback;storyCallback=null;if(fn)fn();
+});
+function nearRexy(){return distance(kid,rexy)<3}
+function mountRexy(){
+ if(!rexy.fed)return notice('Give Rexy a berry to make friends first! 🍓');
+ quest.riding=true;if(quest.stage<4)quest.stage=4;
+ rexy.object.position.set(kid.x,0,kid.z);rider.group.visible=true;ermias.group.visible=false;
+ notice('YAY! Ride Rexy! 🦖💨');sparkles(kid.x,kid.z,20);update();save();
+}
+function dismount(){
+ quest.riding=false;rider.group.visible=false;ermias.group.visible=true;
+ rexy.x=kid.x+2;rexy.z=kid.z+1;rexy.object.position.set(rexy.x,0,rexy.z);
+ notice('Off Rexy! 🦕');update();save();
+}
+function hatchEgg(){
+ quest.hatched=true;quest.stage=Math.max(quest.stage,2);pip.visible=true;
+ pip.position.set(kid.x+1,0,kid.z+1);sparkles(kid.x,kid.z,40);
+ notice('Meet Pip, your baby dinosaur! 🐣🦕');update();save();
+}
+
+function distance(a,b){return Math.hypot(a.x-b.x,(a.z??a.y)-(b.z??b.y))}
+function allSupplies(){return bag.egg>=3&&bag.wood>=4&&bag.star>=3}
+function allDinos(){return dinoData.every(d=>d.fed)}
+function save(){try{localStorage.setItem('ermias-dino-3d-v2',JSON.stringify({bag,items:items.map(x=>x.got),dinos:dinoData.map(x=>x.fed),kid,complete:state.complete}))}catch(e){}}
+function restore(){
+try{const s=JSON.parse(localStorage.getItem('ermias-dino-3d-v1')||'null');if(!s)return;
+for(const k of Object.keys(bag))bag[k]=Math.max(0,Number(s.bag?.[k])||0);
+items.forEach((it,i)=>{it.got=!!s.items?.[i];it.object.visible=!it.got});
+dinoData.forEach((d,i)=>d.fed=!!s.dinos?.[i]);
+kid.x=Math.min(18,Math.max(-18,Number(s.kid?.x)||0));kid.z=Math.min(18,Math.max(-18,Number(s.kid?.z)||0));
+state.complete=!!s.complete;if(state.complete)buildCamp();
+}catch(e){}
+}
+restore();
+function effect(freq=520){if(!state.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!window._dinoAudio)window._dinoAudio=new C;const a=window._dinoAudio,o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.11,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.16);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.17)}catch(e){}}
+function notice(s){const t=$('toast');t.textContent=s;t.classList.add('visible');state.toastEnd=performance.now()+2400;effect(620);}
+function update(){
+const req={egg:3,wood:4,star:3,berry:3},ic={egg:'🥚',wood:'🪵',star:'⭐',berry:'🍓'};
+$('counts').innerHTML=['egg','wood','star','berry'].map(k=>'<span class="counter">'+ic[k]+' '+bag[k]+(k==='berry'?'':'/'+req[k])+'</span>').join('');
+const fed=dinoData.filter(d=>d.fed).length;
+let message,tip;
+if(!allSupplies()){message='Collect 3 eggs, 4 logs & 3 stars!';tip='Follow the glowing objects and pick them up.'}
+else if(!allDinos()){message='Befriend 3 dinosaurs! ('+fed+'/3)';tip='Find berries, then go near Rexy, Trixie or Spike to feed them.'}
+else if(!state.complete){message='Build your very own Dino Camp!';tip='Go to the orange tent near Dad and tap BUILD.'}
+else{message='Dino Meadow complete! 🎉';tip='You helped all the dinosaurs. Amazing!'}
+$('goal').textContent=message;$('tip').textContent=tip;
+const progress=Math.min(100,(Math.min(3,bag.egg)+Math.min(4,bag.wood)+Math.min(3,bag.star)+fed*2+(state.complete?3:0))/19*100);
+$('progress').style.width=progress+'%';
+}
+function nearestDino(){return dinoData.find(d=>!d.fed&&distance(kid,d)<2.65)}
+function nearCamp(){return distance(kid,{x:3,z:2})<3.2}
+function nearDad(){return distance(kid,{x:-3,z:-1.5})<2.4}
+function setAction(){
+const d=nearestDino();
+let text=d?'🍓<small>Feed '+d.name+'</small>':nearCamp()?'🏕️<small>Build</small>':nearDad()?'👋<small>Hi Dad</small>':'✨<small>Explore</small>';
+if(act.innerHTML!==text)act.innerHTML=text;
+}
+function interaction(){
+if(!state.started||state.complete)return;
+const d=nearestDino();
+if(d){
+if(bag.berry<1)return notice('Find a berry first! 🍓');
+bag.berry--;d.fed=true;notice(d.name+' is your new friend! 💖');save();update();return;
+}
+if(nearCamp()){
+if(!allSupplies()||!allDinos())return notice('Collect supplies and befriend all 3 dinos first! 🥚');
+buildCamp();state.complete=true;notice('You built Dino Camp! 🎉');save();update();
+setTimeout(()=>{$('ending').classList.add('show')},1150);return;
+}
+if(nearDad())return notice('Dad: You got this, Ermias! 💛');
+notice('Collect eggs and visit the dinosaurs! 🦖');
+}
+function collect(){
+let changed=false;
+for(const item of items)if(!item.got&&distance(kid,item)<1.25){
+item.got=true;item.object.visible=false;bag[item.type]++;changed=true;
+notice({egg:'A dino egg! 🥚',wood:'Nice wood for camp! 🪵',star:'You found a star! ⭐',berry:'Yummy berries! 🍓'}[item.type]);
+}
+if(changed){update();save();}
+}
+function guide(){
+if(!state.started||state.complete)return;
+let choices=[];
+if(!allSupplies())choices=items.filter(i=>!i.got&&((i.type==='egg'&&bag.egg<3)||(i.type==='wood'&&bag.wood<4)||(i.type==='star'&&bag.star<3)));
+else if(!allDinos())choices=(bag.berry<dinoData.filter(d=>!d.fed).length)?items.filter(i=>!i.got&&i.type==='berry'):dinoData.filter(d=>!d.fed);
+else choices=[{x:3,z:2}];
+if(!choices.length)choices=[{x:3,z:2}];
+choices.sort((a,b)=>distance(kid,a)-distance(kid,b));
+state.target={x:choices[0].x,z:choices[0].z};notice('Let’s go explore! 🧭');
+}
+function reset(){
+try{localStorage.removeItem('ermias-dino-3d-v1')}catch(e){}
+for(const k in bag)bag[k]=0;
+items.forEach(i=>{i.got=false;i.object.visible=true});
+dinoData.forEach(d=>d.fed=false);
+kid.x=0;kid.z=0;state.target=null;state.complete=false;upgraded=false;
+base.children.slice().forEach(o=>{if(o!==tent&&o!==flagBar&&o!==flag&&o.type==='Group')base.remove(o)});
+tent.visible=true;
+$('ending').classList.remove('show');cover.classList.add('hidden');state.started=true;update();notice('New adventure! 🌈');
+}
+let stick={x:0,y:0,pointer:null};
+function joystickMove(e){
+const r=joystick.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2,max=r.width*.32,len=Math.hypot(x,y),ratio=len>max?max/len:1;
+const xx=x*ratio,yy=y*ratio;stick.x=xx/max;stick.y=yy/max;nub.style.transform='translate(calc(-50% + '+xx+'px),calc(-50% + '+yy+'px))';
+}
+joystick.addEventListener('pointerdown',e=>{if(!state.started)return;e.preventDefault();stick.pointer=e.pointerId;state.target=null;joystick.setPointerCapture(e.pointerId);joystickMove(e)});
+joystick.addEventListener('pointermove',e=>{if(stick.pointer===e.pointerId)joystickMove(e)});
+function release(e){if(stick.pointer!==e.pointerId)return;stick.pointer=null;stick.x=stick.y=0;nub.style.transform='translate(-50%,-50%)'}
+joystick.addEventListener('pointerup',release);joystick.addEventListener('pointercancel',release);
+window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()))e.preventDefault();if(e.key===' ')interaction()});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+canvas.addEventListener('pointerdown',e=>{
+if(!state.started||state.complete)return;
+const b=canvas.getBoundingClientRect();pointer.x=(e.clientX-b.left)/b.width*2-1;pointer.y=-(e.clientY-b.top)/b.height*2+1;
+raycaster.setFromCamera(pointer,camera);
+const v=new THREE.Vector3();
+if(raycaster.ray.intersectPlane(plane,v)){state.target={x:Math.max(-19,Math.min(19,v.x)),z:Math.max(-19,Math.min(19,v.z))};}
+});
+$('go').addEventListener('click',guide);act.addEventListener('click',interaction);
+$('reset').addEventListener('click',reset);
+$('sound').addEventListener('click',()=>{state.sound=!state.sound;$('sound').textContent=state.sound?'🔊':'🔇';notice(state.sound?'Sound on! 🎵':'Sound off')});
+$('again').addEventListener('click',reset);
+play.disabled=false;play.textContent=state.complete?'🏆 See my Dino Camp!':items.some(i=>i.got)?'▶ CONTINUE ADVENTURE':'▶ PLAY NOW';
+loading.textContent='The dinosaurs are ready! ✅';
+play.addEventListener('click',()=>{
+cover.classList.add('hidden');state.started=true;
+if(state.complete)$('ending').classList.add('show');else notice('Find dinosaur eggs, Ermias! 🥚');
+});
+function resize(){
+const w=canvas.clientWidth,h=canvas.clientHeight;
+if(w!==renderer.domElement.width/(renderer.getPixelRatio())||h!==renderer.domElement.height/(renderer.getPixelRatio())){
+renderer.setSize(w,h,false);
+}
+const frustum=22,aspect=w/Math.max(1,h);
+camera.left=-frustum*aspect/2;camera.right=frustum*aspect/2;camera.top=frustum/2;camera.bottom=-frustum/2;camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize);resize();
+const follow=new THREE.Vector3();
+let totalTime=0,last=0;
+function loop(time){
+requestAnimationFrame(loop);
+const dt=Math.min(.05,(time-last||16)/1000);last=time;totalTime+=dt;
+let moving=false;
+if(state.started&&!state.complete){
+let dx=stick.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+let dy=stick.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+let vx=0,vz=0;
+if(Math.hypot(dx,dy)>.15){
+state.target=null;const m=Math.hypot(dx,dy);dx/=Math.max(1,m);dy/=Math.max(1,m);
+vx=(dx+dy)*.707;vz=(-dx+dy)*.707;moving=true;
+}else if(state.target){
+const length=distance(kid,state.target);
+if(length<.45)state.target=null;
+else{vx=(state.target.x-kid.x)/length;vz=(state.target.z-kid.z)/length;moving=true;}
+}
+if(moving){
+const speed=5.4;kid.x=Math.max(-19,Math.min(19,kid.x+vx*speed*dt));kid.z=Math.max(-19,Math.min(19,kid.z+vz*speed*dt));
+ermias.group.rotation.y=Math.atan2(vx,vz);
+}
+collect();setAction();
+}
+ermias.group.position.set(kid.x,Math.sin(totalTime*(moving?11:2))*(moving?.075:.025),kid.z);
+ermias.arms.forEach((arm,i)=>arm.rotation.x=moving?Math.sin(totalTime*11+i*Math.PI)*.5:Math.sin(totalTime*2+i)*.06);
+ermias.legs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(totalTime*11+(i+1)*Math.PI)*.45:0);
+dad.group.position.y=Math.sin(totalTime*1.8)*.04;
+dinoData.forEach((d,i)=>{
+d.object.position.y=Math.sin(totalTime*2+i*1.7)*.09;
+d.object.rotation.y+=Math.sin(totalTime+i*1.9)*dt*.045;
+if(d.fed&&Math.sin(totalTime*1.8+i)>0){d.object.children[0].scale.y=1.025}else{d.object.children[0].scale.y=1;}
+});
+for(const item of items)if(!item.got)item.object.position.y=Math.sin(totalTime*2+item.x)*.10;
+const cameraOffset=new THREE.Vector3(17,20,17);
+follow.set(kid.x,0,kid.z);
+const cameraPos=follow.clone().add(cameraOffset);
+camera.position.lerp(cameraPos,.085);
+camera.lookAt(follow.x,0,follow.z);
+renderer.render(scene,camera);
+if(state.toastEnd&&time>state.toastEnd){$('toast').classList.remove('visible');state.toastEnd=0;}
+}
+camera.position.set(17,20,17);camera.lookAt(0,0,0);
+update();requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
