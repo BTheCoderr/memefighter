@@ -251,111 +251,197 @@ function hatchEgg(){
 function distance(a,b){return Math.hypot(a.x-b.x,(a.z??a.y)-(b.z??b.y))}
 function allSupplies(){return bag.egg>=3&&bag.wood>=4&&bag.star>=3}
 function allDinos(){return dinoData.every(d=>d.fed)}
-function save(){try{localStorage.setItem('ermias-dino-3d-v2',JSON.stringify({bag,items:items.map(x=>x.got),dinos:dinoData.map(x=>x.fed),kid,complete:state.complete}))}catch(e){}}
+
+function save(){
+try{localStorage.setItem('ermias-dino-3d-v2',JSON.stringify({
+bag,items:items.map(x=>x.got),dinos:dinoData.map(x=>x.fed),
+kid,complete:state.complete,stage:quest.stage,hatched:quest.hatched,
+riding:quest.riding,gateReached:quest.gateReached
+}))}catch(e){}
+}
 function restore(){
-try{const s=JSON.parse(localStorage.getItem('ermias-dino-3d-v1')||'null');if(!s)return;
+try{
+const s=JSON.parse(localStorage.getItem('ermias-dino-3d-v2')||'null');if(!s)return;
 for(const k of Object.keys(bag))bag[k]=Math.max(0,Number(s.bag?.[k])||0);
 items.forEach((it,i)=>{it.got=!!s.items?.[i];it.object.visible=!it.got});
 dinoData.forEach((d,i)=>d.fed=!!s.dinos?.[i]);
-kid.x=Math.min(18,Math.max(-18,Number(s.kid?.x)||0));kid.z=Math.min(18,Math.max(-18,Number(s.kid?.z)||0));
-state.complete=!!s.complete;if(state.complete)buildCamp();
-}catch(e){}
+kid.x=Math.min(18,Math.max(-18,Number(s.kid?.x)||0));
+kid.z=Math.min(18,Math.max(-18,Number(s.kid?.z)||0));
+state.complete=!!s.complete;
+quest.stage=Math.max(0,Math.min(6,Number(s.stage)||0));
+quest.hatched=!!s.hatched;quest.riding=!!s.riding&&rexy.fed;
+quest.gateReached=!!s.gateReached;
+pip.visible=quest.hatched;pip.position.set(kid.x+1,0,kid.z+1);
+if(quest.riding){rexy.object.position.set(kid.x,0,kid.z);rider.group.visible=true;ermias.group.visible=false;}
+if(state.complete){quest.stage=6;buildCamp();}
+}catch(e){/* Starting fresh is safe if a saved run is stale. */}
 }
 restore();
+
 function effect(freq=520){if(!state.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!window._dinoAudio)window._dinoAudio=new C;const a=window._dinoAudio,o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.11,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.16);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.17)}catch(e){}}
 function notice(s){const t=$('toast');t.textContent=s;t.classList.add('visible');state.toastEnd=performance.now()+2400;effect(620);}
+
 function update(){
-const req={egg:3,wood:4,star:3,berry:3},ic={egg:'🥚',wood:'🪵',star:'⭐',berry:'🍓'};
+const req={egg:3,wood:4,star:3},ic={egg:'🥚',wood:'🪵',star:'⭐',berry:'🍓'};
 $('counts').innerHTML=['egg','wood','star','berry'].map(k=>'<span class="counter">'+ic[k]+' '+bag[k]+(k==='berry'?'':'/'+req[k])+'</span>').join('');
-const fed=dinoData.filter(d=>d.fed).length;
-let message,tip;
-if(!allSupplies()){message='Collect 3 eggs, 4 logs & 3 stars!';tip='Follow the glowing objects and pick them up.'}
-else if(!allDinos()){message='Befriend 3 dinosaurs! ('+fed+'/3)';tip='Find berries, then go near Rexy, Trixie or Spike to feed them.'}
-else if(!state.complete){message='Build your very own Dino Camp!';tip='Go to the orange tent near Dad and tap BUILD.'}
-else{message='Dino Meadow complete! 🎉';tip='You helped all the dinosaurs. Amazing!'}
-$('goal').textContent=message;$('tip').textContent=tip;
-const progress=Math.min(100,(Math.min(3,bag.egg)+Math.min(4,bag.wood)+Math.min(3,bag.star)+fed*2+(state.complete?3:0))/19*100);
-$('progress').style.width=progress+'%';
+let message='',tip='',progress=0;
+switch(quest.stage){
+case 0:message='Rescue a mystery dinosaur egg!';tip='Follow the eggs through Dino Meadow. Tap GO! for help.';progress=3;break;
+case 1:message='Something is hatching! 🥚';tip='Meet the baby dinosaur inside your egg.';progress=14;break;
+case 2:message='Help Rexy feel safe';tip=bag.berry?'Find Rexy and press FEED near him.':'Collect a berry to feed Rexy!';progress=26;break;
+case 3:message='Ride your dinosaur friend!';tip='Stand near Rexy and tap RIDE!';progress=45;break;
+case 4:message='Ride through the Rainbow Gate! 🌈';tip='Ride Rexy to the rainbow arch. GO! shows the way.';progress=60;break;
+case 5:
+ if(!allSupplies()){
+ message='Gather supplies for Dino Camp!';
+ tip='Collect 3 eggs, 4 logs and 3 stars. Your baby dino helps!';
+ }else if(!allDinos()){
+ message='Feed Trixie and Spike!';
+ tip='Collect berries, then feed the friendly dinosaurs.';
+ }else{
+ message='Build Dino Camp with Dad! 🏡';tip='Go to the orange tent and tap BUILD.';
+ }
+ progress=74+(Math.min(bag.egg,3)+Math.min(bag.wood,4)+Math.min(bag.star,3)+dinoData.filter(d=>d.fed).length*2)/21*24;
+ break;
+default:message='You saved Dino Meadow! 🎉';tip='Dino Camp is ready. Amazing work, Ermias!';progress=100;
 }
+$('goal').textContent=message;$('tip').textContent=tip;$('progress').style.width=Math.min(100,progress)+'%';
+}
+
 function nearestDino(){return dinoData.find(d=>!d.fed&&distance(kid,d)<2.65)}
 function nearCamp(){return distance(kid,{x:3,z:2})<3.2}
 function nearDad(){return distance(kid,{x:-3,z:-1.5})<2.4}
+
 function setAction(){
-const d=nearestDino();
-let text=d?'🍓<small>Feed '+d.name+'</small>':nearCamp()?'🏕️<small>Build</small>':nearDad()?'👋<small>Hi Dad</small>':'✨<small>Explore</small>';
+const d=nearestDino(),canRide=quest.stage>=3&&nearRexy()&&rexy.fed;
+let text=quest.riding?'🦖<small>Dismount</small>':
+canRide?'🦖<small>Ride Rexy</small>':
+d?'🍓<small>Feed '+d.name+'</small>':
+nearCamp()?'🏕️<small>Build</small>':
+nearDad()?'👋<small>Hi Dad</small>':'✨<small>Explore</small>';
 if(act.innerHTML!==text)act.innerHTML=text;
 }
+
+
 function interaction(){
-if(!state.started||state.complete)return;
+if(!state.started||state.complete||quest.dialog)return;
+if(quest.riding){dismount();return;}
+if(quest.stage>=3&&nearRexy()&&rexy.fed){mountRexy();return;}
 const d=nearestDino();
 if(d){
 if(bag.berry<1)return notice('Find a berry first! 🍓');
-bag.berry--;d.fed=true;notice(d.name+' is your new friend! 💖');save();update();return;
+bag.berry--;d.fed=true;
+if(d===rexy&&quest.stage===2)quest.stage=3;
+notice(d.name+' is your new friend! 💖');sparkles(d.x,d.z,15);
+save();update();return;
 }
 if(nearCamp()){
-if(!allSupplies()||!allDinos())return notice('Collect supplies and befriend all 3 dinos first! 🥚');
-buildCamp();state.complete=true;notice('You built Dino Camp! 🎉');save();update();
-setTimeout(()=>{$('ending').classList.add('show')},1150);return;
+if(quest.stage<5)return notice('Help the baby dinosaur and visit the Rainbow Gate first! 🌈');
+if(!allSupplies()||!allDinos())return notice('Collect supplies and feed all 3 dinosaurs first! 🥚');
+buildCamp();state.complete=true;quest.stage=6;notice('You built Dino Camp! 🎉');
+sparkles(kid.x,kid.z,50);save();update();
+setTimeout(()=>{$('ending').classList.add('show')},1100);return;
 }
-if(nearDad())return notice('Dad: You got this, Ermias! 💛');
-notice('Collect eggs and visit the dinosaurs! 🦖');
+if(nearDad())return notice('Dad: I knew you could do it, Ermias! 💛');
+notice('The adventure awaits! Press GO! 🧭');
 }
+
+
 function collect(){
-let changed=false;
-for(const item of items)if(!item.got&&distance(kid,item)<1.25){
+let changed=false,foundEgg=false;
+for(const item of items)if(!item.got&&distance(kid,item)<1.22){
 item.got=true;item.object.visible=false;bag[item.type]++;changed=true;
-notice({egg:'A dino egg! 🥚',wood:'Nice wood for camp! 🪵',star:'You found a star! ⭐',berry:'Yummy berries! 🍓'}[item.type]);
+if(item.type==='egg'&&quest.stage===0)foundEgg=true;
+sparkles(item.x,item.z,10);
+notice({egg:'A dino egg! 🥚',wood:'Wood for your camp! 🪵',star:'You found a star! ⭐',berry:'Yummy berries! 🍓'}[item.type]);
 }
 if(changed){update();save();}
+if(foundEgg){
+quest.stage=1;update();save();
+showStory('🥚✨','Your egg is hatching!','Wow, Ermias! There is a tiny baby dinosaur inside. Give the egg a little tap to welcome your new friend.','🐣 Hatch My Egg!',()=>hatchEgg());
 }
+}
+
+
 function guide(){
-if(!state.started||state.complete)return;
+if(!state.started||state.complete||quest.dialog)return;
 let choices=[];
-if(!allSupplies())choices=items.filter(i=>!i.got&&((i.type==='egg'&&bag.egg<3)||(i.type==='wood'&&bag.wood<4)||(i.type==='star'&&bag.star<3)));
-else if(!allDinos())choices=(bag.berry<dinoData.filter(d=>!d.fed).length)?items.filter(i=>!i.got&&i.type==='berry'):dinoData.filter(d=>!d.fed);
-else choices=[{x:3,z:2}];
+switch(quest.stage){
+case 0:choices=items.filter(i=>!i.got&&i.type==='egg');break;
+case 1:return notice('Tap HATCH to meet your baby dinosaur! 🥚');
+case 2:choices=bag.berry>0?[rexy]:items.filter(i=>!i.got&&i.type==='berry');break;
+case 3:choices=[rexy];break;
+case 4:choices=[rainbowGate];break;
+case 5:
+ if(!allSupplies())choices=items.filter(i=>!i.got&&(
+ (i.type==='egg'&&bag.egg<3)||(i.type==='wood'&&bag.wood<4)||(i.type==='star'&&bag.star<3)));
+ else if(!allDinos())choices=bag.berry<dinoData.filter(d=>!d.fed).length?
+ items.filter(i=>!i.got&&i.type==='berry'):dinoData.filter(d=>!d.fed);
+ else choices=[{x:3,z:2}];
+ break;
+}
 if(!choices.length)choices=[{x:3,z:2}];
 choices.sort((a,b)=>distance(kid,a)-distance(kid,b));
-state.target={x:choices[0].x,z:choices[0].z};notice('Let’s go explore! 🧭');
+state.target={x:choices[0].x,z:choices[0].z};
+notice(quest.riding?'Rexy knows the way! 🦖💨':'Follow the trail! 🧭');
 }
+
+
 function reset(){
-try{localStorage.removeItem('ermias-dino-3d-v1')}catch(e){}
+try{localStorage.removeItem('ermias-dino-3d-v2')}catch(e){}
 for(const k in bag)bag[k]=0;
 items.forEach(i=>{i.got=false;i.object.visible=true});
-dinoData.forEach(d=>d.fed=false);
-kid.x=0;kid.z=0;state.target=null;state.complete=false;upgraded=false;
+dinoData.forEach((d,i)=>{d.fed=false;d.x=[-12,12,12][i];d.z=[-8,-8,12][i];d.object.position.set(d.x,0,d.z)});
+kid.x=0;kid.z=0;state.target=null;state.complete=false;state.started=true;
+quest.stage=0;quest.hatched=false;quest.riding=false;quest.gateReached=false;quest.jump=0;
+pip.visible=false;rider.group.visible=false;ermias.group.visible=true;upgraded=false;
 base.children.slice().forEach(o=>{if(o!==tent&&o!==flagBar&&o!==flag&&o.type==='Group')base.remove(o)});
 tent.visible=true;
-$('ending').classList.remove('show');cover.classList.add('hidden');state.started=true;update();notice('New adventure! 🌈');
+$('ending').classList.remove('show');cover.classList.add('hidden');
+update();
+showStory('👨🏽‍🦱🦖','Dad has a mission!','Ermias, a baby dinosaur is lost somewhere in Dino Meadow. Let’s find its egg and help it hatch!','Let’s find it! 🥚',()=>notice('Press GO! to find the egg! 🧭'));
 }
+
 let stick={x:0,y:0,pointer:null};
 function joystickMove(e){
 const r=joystick.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2,max=r.width*.32,len=Math.hypot(x,y),ratio=len>max?max/len:1;
 const xx=x*ratio,yy=y*ratio;stick.x=xx/max;stick.y=yy/max;nub.style.transform='translate(calc(-50% + '+xx+'px),calc(-50% + '+yy+'px))';
 }
-joystick.addEventListener('pointerdown',e=>{if(!state.started)return;e.preventDefault();stick.pointer=e.pointerId;state.target=null;joystick.setPointerCapture(e.pointerId);joystickMove(e)});
+joystick.addEventListener('pointerdown',e=>{if(!state.started||quest.dialog)return;e.preventDefault();stick.pointer=e.pointerId;state.target=null;joystick.setPointerCapture(e.pointerId);joystickMove(e)});
 joystick.addEventListener('pointermove',e=>{if(stick.pointer===e.pointerId)joystickMove(e)});
 function release(e){if(stick.pointer!==e.pointerId)return;stick.pointer=null;stick.x=stick.y=0;nub.style.transform='translate(-50%,-50%)'}
 joystick.addEventListener('pointerup',release);joystick.addEventListener('pointercancel',release);
-window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()))e.preventDefault();if(e.key===' ')interaction()});
+window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='j'&&!quest.dialog)jump();keys[e.key.toLowerCase()]=true;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()))e.preventDefault();if(e.key===' ')interaction()});
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 canvas.addEventListener('pointerdown',e=>{
-if(!state.started||state.complete)return;
+if(!state.started||state.complete||quest.dialog)return;
 const b=canvas.getBoundingClientRect();pointer.x=(e.clientX-b.left)/b.width*2-1;pointer.y=-(e.clientY-b.top)/b.height*2+1;
 raycaster.setFromCamera(pointer,camera);
 const v=new THREE.Vector3();
 if(raycaster.ray.intersectPlane(plane,v)){state.target={x:Math.max(-19,Math.min(19,v.x)),z:Math.max(-19,Math.min(19,v.z))};}
 });
 $('go').addEventListener('click',guide);act.addEventListener('click',interaction);
+function jump(){
+ if(!state.started||quest.dialog||state.complete||quest.jump>0)return;
+ quest.jump=quest.jumpDuration;effect(760);
+}
+$('jump').addEventListener('click',jump);
 $('reset').addEventListener('click',reset);
 $('sound').addEventListener('click',()=>{state.sound=!state.sound;$('sound').textContent=state.sound?'🔊':'🔇';notice(state.sound?'Sound on! 🎵':'Sound off')});
 $('again').addEventListener('click',reset);
 play.disabled=false;play.textContent=state.complete?'🏆 See my Dino Camp!':items.some(i=>i.got)?'▶ CONTINUE ADVENTURE':'▶ PLAY NOW';
 loading.textContent='The dinosaurs are ready! ✅';
+
 play.addEventListener('click',()=>{
 cover.classList.add('hidden');state.started=true;
-if(state.complete)$('ending').classList.add('show');else notice('Find dinosaur eggs, Ermias! 🥚');
+if(state.complete){$('ending').classList.add('show');return;}
+if(quest.stage===0){
+showStory('👨🏽‍🦱🥚','Dad needs your help!','Ermias, a baby dinosaur is lost in Dino Meadow! Find its mystery egg, hatch it, and let’s go meet the big dinosaurs!','Let’s rescue it! 🦖',()=>notice('Press GO! to find the egg! 🧭'));
+}else if(quest.stage===1){
+showStory('🥚✨','Your egg is hatching!','There is a baby dinosaur waiting to meet you!','🐣 Hatch My Egg!',()=>hatchEgg());
+}else{notice('Welcome back to Dino Meadow! 🌈');}
 });
+
 function resize(){
 const w=canvas.clientWidth,h=canvas.clientHeight;
 if(w!==renderer.domElement.width/(renderer.getPixelRatio())||h!==renderer.domElement.height/(renderer.getPixelRatio())){
@@ -367,11 +453,12 @@ camera.left=-frustum*aspect/2;camera.right=frustum*aspect/2;camera.top=frustum/2
 window.addEventListener('resize',resize);resize();
 const follow=new THREE.Vector3();
 let totalTime=0,last=0;
+
 function loop(time){
 requestAnimationFrame(loop);
 const dt=Math.min(.05,(time-last||16)/1000);last=time;totalTime+=dt;
 let moving=false;
-if(state.started&&!state.complete){
+if(state.started&&!state.complete&&!quest.dialog){
 let dx=stick.x+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
 let dy=stick.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
 let vx=0,vz=0;
@@ -380,26 +467,72 @@ state.target=null;const m=Math.hypot(dx,dy);dx/=Math.max(1,m);dy/=Math.max(1,m);
 vx=(dx+dy)*.707;vz=(-dx+dy)*.707;moving=true;
 }else if(state.target){
 const length=distance(kid,state.target);
-if(length<.45)state.target=null;
+if(length<.5){state.target=null}
 else{vx=(state.target.x-kid.x)/length;vz=(state.target.z-kid.z)/length;moving=true;}
 }
 if(moving){
-const speed=5.4;kid.x=Math.max(-19,Math.min(19,kid.x+vx*speed*dt));kid.z=Math.max(-19,Math.min(19,kid.z+vz*speed*dt));
-ermias.group.rotation.y=Math.atan2(vx,vz);
+const speed=quest.riding?9:5.5;
+kid.x=Math.max(-19,Math.min(19,kid.x+vx*speed*dt));
+kid.z=Math.max(-19,Math.min(19,kid.z+vz*speed*dt));
+if(quest.riding)rexy.object.rotation.y=Math.atan2(vx,vz);
+else ermias.group.rotation.y=Math.atan2(vx,vz);
 }
 collect();setAction();
+if(quest.stage===4&&quest.riding&&distance(kid,rainbowGate)<3.0){
+quest.gateReached=true;quest.stage=5;
+sparkles(rainbowGate.x,rainbowGate.z,60);save();update();
+showStory('🌈🏆','Rainbow Gate unlocked!','You and Rexy made it! Pip is safe, and a new path has opened. Now gather supplies, help the other dinosaurs and build Dino Camp with Dad.','Build Dino Camp! 🏡',()=>notice('Collect wood, eggs, and stars for camp!'));
 }
-ermias.group.position.set(kid.x,Math.sin(totalTime*(moving?11:2))*(moving?.075:.025),kid.z);
-ermias.arms.forEach((arm,i)=>arm.rotation.x=moving?Math.sin(totalTime*11+i*Math.PI)*.5:Math.sin(totalTime*2+i)*.06);
-ermias.legs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(totalTime*11+(i+1)*Math.PI)*.45:0);
+}
+const jumpOffset=quest.jump>0?Math.sin((1-quest.jump/quest.jumpDuration)*Math.PI)*.95:0;
+quest.jump=Math.max(0,quest.jump-dt);
+const bob=Math.sin(totalTime*(moving?11:2))*(moving?.075:.025);
+if(quest.riding){
+rexy.object.position.set(kid.x,bob+jumpOffset,kid.z);
+ermias.group.visible=false;
+rider.group.visible=true;
+rider.body.rotation.z=moving?Math.sin(totalTime*9)*.08:0;
+}else{
+ermias.group.position.set(kid.x,bob+jumpOffset,kid.z);
+ermias.group.visible=true;
+rider.group.visible=false;
+}
+ermias.arms.forEach((arm,i)=>arm.rotation.x=moving&&!quest.riding?Math.sin(totalTime*11+i*Math.PI)*.65:Math.sin(totalTime*2+i)*.06);
+ermias.legs.forEach((leg,i)=>leg.rotation.x=moving&&!quest.riding?Math.sin(totalTime*11+(i+1)*Math.PI)*.55:0);
 dad.group.position.y=Math.sin(totalTime*1.8)*.04;
 dinoData.forEach((d,i)=>{
-d.object.position.y=Math.sin(totalTime*2+i*1.7)*.09;
+if(d===rexy&&quest.riding){
+d.object.children[0].rotation.z=moving?Math.sin(totalTime*11)*.045:0;
+return;
+}
+d.object.position.y=Math.sin(totalTime*2+i*1.7)*.10;
 d.object.rotation.y+=Math.sin(totalTime+i*1.9)*dt*.045;
-if(d.fed&&Math.sin(totalTime*1.8+i)>0){d.object.children[0].scale.y=1.025}else{d.object.children[0].scale.y=1;}
+d.object.children[0].rotation.z=Math.sin(totalTime*2.5+i)*.018;
 });
+if(quest.hatched){
+const behindX=kid.x-(quest.riding?2.4:1.3);
+const behindZ=kid.z+(quest.riding?2:1.25);
+const followSpeed=quest.riding?5:3.1;
+const delta=Math.hypot(behindX-pip.position.x,behindZ-pip.position.z);
+if(delta>9){pip.position.x=behindX;pip.position.z=behindZ;}
+else{
+const step=Math.min(1,dt*followSpeed);
+pip.position.x+=(behindX-pip.position.x)*step;
+pip.position.z+=(behindZ-pip.position.z)*step;
+}
+pip.position.y=Math.sin(totalTime*6)*.15;
+pip.rotation.y=Math.sin(totalTime*3)*.3;
+pip.visible=true;
+}
 for(const item of items)if(!item.got)item.object.position.y=Math.sin(totalTime*2+item.x)*.10;
-const cameraOffset=new THREE.Vector3(17,20,17);
+gate.rotation.y=Math.sin(totalTime*.8)*.05;
+for(let i=burst.length-1;i>=0;i--){
+const b=burst[i];b.life-=dt;
+b.o.position.x+=b.vx*dt;b.o.position.z+=b.vz*dt;b.o.position.y+=b.vy*dt;b.vy-=9*dt;
+b.o.scale.setScalar(Math.max(.01,b.life));
+if(b.life<=0){world.remove(b.o);b.o.geometry.dispose();b.o.material.dispose();burst.splice(i,1);}
+}
+const cameraOffset=quest.riding?new THREE.Vector3(19,23,19):new THREE.Vector3(17,20,17);
 follow.set(kid.x,0,kid.z);
 const cameraPos=follow.clone().add(cameraOffset);
 camera.position.lerp(cameraPos,.085);
@@ -407,6 +540,7 @@ camera.lookAt(follow.x,0,follow.z);
 renderer.render(scene,camera);
 if(state.toastEnd&&time>state.toastEnd){$('toast').classList.remove('visible');state.toastEnd=0;}
 }
+
 camera.position.set(17,20,17);camera.lookAt(0,0,0);
 update();requestAnimationFrame(loop);
 })();
