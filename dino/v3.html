@@ -647,13 +647,15 @@ else{vx=(state.target.x-kid.x)/length;vz=(state.target.z-kid.z)/length;moving=tr
 }
 if(moving){
 const speed=quest.riding?9:5.5;
-kid.x=Math.max(-19,Math.min(19,kid.x+vx*speed*dt));
-kid.z=Math.max(-19,Math.min(19,kid.z+vz*speed*dt));
+const xMin=quest.zone===2?VOL.x-19:-19,xMax=quest.zone===2?VOL.x+19:19;
+const zMin=quest.zone===2?VOL.z-19:-19,zMax=quest.zone===2?VOL.z+19:19;
+kid.x=Math.max(xMin,Math.min(xMax,kid.x+vx*speed*dt));
+kid.z=Math.max(zMin,Math.min(zMax,kid.z+vz*speed*dt));
 if(quest.riding)rexy.object.rotation.y=Math.atan2(vx,vz);
 else ermias.group.rotation.y=Math.atan2(vx,vz);
 }
 collect();setAction();
-if(quest.stage===4&&quest.riding&&distance(kid,rainbowGate)<3.0){
+if(quest.zone===1&&quest.stage===4&&quest.riding&&distance(kid,rainbowGate)<3.0){
 quest.gateReached=true;quest.stage=5;
 sparkles(rainbowGate.x,rainbowGate.z,60);save();update();
 showStory('🌈🏆','Rainbow Gate unlocked!','You and Rexy made it! Pip is safe, and a new path has opened. Now gather supplies, help the other dinosaurs and build Dino Camp with Dad.','Build Dino Camp! 🏡',()=>notice('Collect wood, eggs, and stars for camp!'));
@@ -700,6 +702,18 @@ pip.rotation.y=Math.sin(totalTime*3)*.3;
 pip.visible=true;
 }
 for(const item of items)if(!item.got)item.object.position.y=Math.sin(totalTime*2+item.x)*.10;
+for(const crystal of crystals)if(!crystal.got){
+ crystal.object.position.y=Math.sin(totalTime*2.9+crystal.x)*.15;
+ crystal.gem.rotation.y+=dt*1.4;
+}
+for(let i=0;i<raceRings.length;i++){
+ const ring=raceRings[i];if(ring.object.visible)ring.object.scale.setScalar(1+Math.sin(totalTime*3+i)*.045);
+}
+volcanoBuddy.position.y=Math.sin(totalTime*2.5)*.17;
+goldenEgg.position.y=Math.sin(totalTime*3.5)*.18;
+goldenEgg.rotation.y+=dt*.45;
+crater.material.emissive.set('#a84b20');
+crater.material.emissiveIntensity=.17+.1*Math.sin(totalTime*2.9);
 gate.rotation.y=Math.sin(totalTime*.8)*.05;
 for(let i=burst.length-1;i>=0;i--){
 const b=burst[i];b.life-=dt;
