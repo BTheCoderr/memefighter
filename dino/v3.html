@@ -43,7 +43,7 @@
 <div class="toast" id="toast"></div>
 <div class="bottom"><div class="joystick" id="joystick" aria-label="Movement joystick"><div class="nub" id="nub"></div></div><div class="buttons"><button class="act go" id="go">🧭<small>GO!</small></button><button class="act" id="act">✨<small>Explore</small></button><button class="act" id="jump">⬆️<small>Jump</small></button></div></div>
 </div>
-<div class="overlay" id="cover"><div class="panel"><div class="hero">🌴🦖🥚</div><div class="tag">An adventure made for Ermias 💛</div><h1>ERMIAS<br><span>& THE DINO WORLD</span></h1><p>A baby dinosaur needs your help! Hatch a mystery egg, make a new little friend, ride Rexy through the jungle, then build Dino Camp with Dad.</p><button id="play" disabled>🦕 Loading World...</button><button id="preview-volcano" disabled>🌋 Try Rainbow Volcano</button><div class="status" id="loading">Getting the dinosaurs ready</div><div class="subtitle">Rescue story · Baby dinosaur companion · Ride Rexy · Jump!</div><a href="./3d.html">Having trouble? Play the previous 3D demo</a></div></div>
+<div class="overlay" id="cover"><div class="panel"><div class="hero">🌴🦖🥚</div><div class="tag">An adventure made for Ermias 💛</div><h1>ERMIAS<br><span>& THE DINO WORLD</span></h1><p>A baby dinosaur needs your help! Hatch a mystery egg, make a new little friend, ride Rexy through the jungle, then build Dino Camp with Dad.</p><button id="play" disabled>🦕 Loading World...</button><button id="preview-volcano" disabled>🌋 Try Rainbow Volcano</button><div class="status" id="loading">Getting the dinosaurs ready</div><div class="subtitle">Two playable worlds · Dino riding · Egg rescue · Jumping!</div><a href="./3d.html">Having trouble? Play the previous 3D demo</a></div></div>
 <div class="story hidden" id="story" role="dialog" aria-modal="true" aria-labelledby="story-title"><div class="storycard"><div class="storyemoji" id="story-emoji">🥚</div><h2 id="story-title">A Dinosaur Adventure</h2><p id="story-text">There's a mystery to solve!</p><button id="story-next">Let's go!</button></div></div>
 <div class="overlay end" id="ending"><div class="panel"><div class="hero">🎉🏡🦕</div><h1>YOU DID IT,<br><span>ERMIAS!</span></h1><p>All three dinosaur friends are happy and Dino Camp is built! Dad is proud of you. 💛</p><button id="nextworld">🌋 Explore Rainbow Volcano!</button><button id="again">🌈 Replay Dino Meadow</button><div class="subtitle">The Rainbow Gate is open! Your next adventure awaits.</div></div></div>
 <div class="overlay end" id="volcano-ending"><div class="panel"><div class="hero">🌋💎🦕</div><h1>RAINBOW VOLCANO<br><span>CHAMPION!</span></h1><p>You collected the rainbow crystals, rode Rexy through the glowing trail and hatched a golden dinosaur egg. Dad and Pip are so proud!</p><button id="return-home">🏡 Back to Dino Meadow</button><button id="replay-volcano" style="display:block;margin:14px auto 0;background:linear-gradient(#d5eefe,#a1d9f6);box-shadow:0 5px #75b1d8">🌋 Explore Again</button></div></div>
@@ -363,6 +363,7 @@ setZoneDisplay();
 }
 restore();
 function travelToVolcano(preview=false){
+ if(preview)buildCamp();
  if(quest.riding){rider.group.visible=false;ermias.group.visible=true;}
  quest.zone=2;quest.stage=7;quest.volcanoDone=false;quest.rings=0;
  quest.hatched=true;quest.riding=true;quest.dialog=false;state.complete=false;
@@ -379,9 +380,10 @@ function travelToVolcano(preview=false){
  showStory('🌋💎','Welcome to Rainbow Volcano!','Look at all the glowing colors! Ride Rexy to find five rainbow crystals. Then follow the magical hoops and rescue a golden dinosaur egg.','Let’s explore! 🦖',()=>notice('Find five glowing crystals! Press GO! 🧭'));
 }
 function returnHome(){
+ buildCamp();
  quest.zone=1;quest.stage=6;quest.riding=false;quest.volcanoDone=false;
  state.complete=true;quest.dialog=false;state.target=null;
- rexy.object.position.set(-12,0,-8);
+ rexy.x=-12;rexy.z=-8;rexy.object.position.set(-12,0,-8);
  kid.x=3;kid.z=3;
  rider.group.visible=false;ermias.group.visible=true;
  $('volcano-ending').classList.remove('show');
@@ -651,6 +653,10 @@ const xMin=quest.zone===2?VOL.x-19:-19,xMax=quest.zone===2?VOL.x+19:19;
 const zMin=quest.zone===2?VOL.z-19:-19,zMax=quest.zone===2?VOL.z+19:19;
 kid.x=Math.max(xMin,Math.min(xMax,kid.x+vx*speed*dt));
 kid.z=Math.max(zMin,Math.min(zMax,kid.z+vz*speed*dt));
+if(quest.zone===2){
+ const xx=kid.x-VOL.x,zz=kid.z-VOL.z,rr=Math.hypot(xx,zz);
+ if(rr>18.8){kid.x=VOL.x+xx/rr*18.8;kid.z=VOL.z+zz/rr*18.8;}
+}
 if(quest.riding)rexy.object.rotation.y=Math.atan2(vx,vz);
 else ermias.group.rotation.y=Math.atan2(vx,vz);
 }
