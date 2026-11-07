@@ -425,9 +425,12 @@ function collectVolcano(){
 function effect(freq=520){if(!state.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!window._dinoAudio)window._dinoAudio=new C;const a=window._dinoAudio,o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.11,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.16);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.17)}catch(e){}}
 function notice(s){const t=$('toast');t.textContent=s;t.classList.add('visible');state.toastEnd=performance.now()+2400;effect(620);}
 
+
 function update(){
 const req={egg:3,wood:4,star:3},ic={egg:'🥚',wood:'🪵',star:'⭐',berry:'🍓'};
-$('counts').innerHTML=['egg','wood','star','berry'].map(k=>'<span class="counter">'+ic[k]+' '+bag[k]+(k==='berry'?'':'/'+req[k])+'</span>').join('');
+$('counts').innerHTML=quest.zone===2?
+ '<span class="counter">💎 '+crystals.filter(c=>c.got).length+'/5</span><span class="counter">🌈 '+quest.rings+'/3</span><span class="counter">🦖 Rexy</span>':
+ ['egg','wood','star','berry'].map(k=>'<span class="counter">'+ic[k]+' '+bag[k]+(k==='berry'?'':'/'+req[k])+'</span>').join('');
 let message='',tip='',progress=0;
 switch(quest.stage){
 case 0:message='Rescue a mystery dinosaur egg!';tip='Follow the eggs through Dino Meadow. Tap GO! for help.';progress=3;break;
@@ -436,27 +439,32 @@ case 2:message='Help Rexy feel safe';tip=bag.berry?'Find Rexy and press FEED nea
 case 3:message='Ride your dinosaur friend!';tip='Stand near Rexy and tap RIDE!';progress=45;break;
 case 4:message='Ride through the Rainbow Gate! 🌈';tip='Ride Rexy to the rainbow arch. GO! shows the way.';progress=60;break;
 case 5:
- if(!allSupplies()){
- message='Gather supplies for Dino Camp!';
- tip='Collect 3 eggs, 4 logs and 3 stars. Your baby dino helps!';
- }else if(!allDinos()){
- message='Feed Trixie and Spike!';
- tip='Collect berries, then feed the friendly dinosaurs.';
- }else{
- message='Build Dino Camp with Dad! 🏡';tip='Go to the orange tent and tap BUILD.';
- }
+ if(!allSupplies()){message='Gather supplies for Dino Camp!';tip='Collect 3 eggs, 4 logs and 3 stars. Your baby dino helps!';}
+ else if(!allDinos()){message='Feed Trixie and Spike!';tip='Collect berries, then feed the friendly dinosaurs.';}
+ else{message='Build Dino Camp with Dad! 🏡';tip='Go to the orange tent and tap BUILD.';}
  progress=74+(Math.min(bag.egg,3)+Math.min(bag.wood,4)+Math.min(bag.star,3)+dinoData.filter(d=>d.fed).length*2)/21*24;
  break;
-default:message='You saved Dino Meadow! 🎉';tip='Dino Camp is ready. Amazing work, Ermias!';progress=100;
+case 6:message='Dino Camp complete! 🎉';tip='Open the Rainbow Volcano adventure to keep exploring.';progress=100;break;
+case 7:message='Find five rainbow crystals! 💎';tip='Ride Rexy around the volcano. Tap GO! to find the next crystal.';progress=crystals.filter(c=>c.got).length/5*50;break;
+case 8:message='Ride through three rainbow hoops!';tip='Ride Rexy through the glowing arch. No timer, just fun!';progress=55+quest.rings/3*30;break;
+case 9:message='Find the golden dinosaur egg! 🥚';tip='Your final surprise is waiting near the middle of Rainbow Volcano.';progress=92;break;
+case 10:message='Rainbow Volcano champion! 🏆';tip='You hatched the rare golden dinosaur. Amazing job!';progress=100;break;
+default:message='Dino World awaits!';tip='Explore with your dinosaur friends.';progress=0;
 }
-$('goal').textContent=message;$('tip').textContent=tip;$('progress').style.width=Math.min(100,progress)+'%';
+$('goal').textContent=message;$('tip').textContent=tip;$('progress').style.width=Math.min(100,Math.max(0,progress))+'%';
 }
 
 function nearestDino(){return dinoData.find(d=>!d.fed&&distance(kid,d)<2.65)}
 function nearCamp(){return distance(kid,{x:3,z:2})<3.2}
 function nearDad(){return distance(kid,{x:-3,z:-1.5})<2.4}
 
+
 function setAction(){
+if(quest.zone===2){
+let label=quest.riding?'🦖<small>Dismount</small>':'🦖<small>Ride Rexy</small>';
+if(act.innerHTML!==label)act.innerHTML=label;
+return;
+}
 const d=nearestDino(),canRide=quest.stage>=3&&nearRexy()&&rexy.fed;
 let text=quest.riding?'🦖<small>Dismount</small>':
 canRide?'🦖<small>Ride Rexy</small>':
@@ -466,9 +474,9 @@ nearDad()?'👋<small>Hi Dad</small>':'✨<small>Explore</small>';
 if(act.innerHTML!==text)act.innerHTML=text;
 }
 
-
 function interaction(){
 if(!state.started||state.complete||quest.dialog)return;
+if(quest.zone===2){if(quest.riding)dismount();else mountRexy();return;}
 if(quest.riding){dismount();return;}
 if(quest.stage>=3&&nearRexy()&&rexy.fed){mountRexy();return;}
 const d=nearestDino();
@@ -492,6 +500,7 @@ notice('The adventure awaits! Press GO! 🧭');
 
 
 function collect(){
+if(quest.zone===2){collectVolcano();return;}
 let changed=false,foundEgg=false;
 for(const item of items)if(!item.got&&distance(kid,item)<1.22){
 item.got=true;item.object.visible=false;bag[item.type]++;changed=true;
@@ -509,6 +518,15 @@ showStory('🥚✨','Your egg is hatching!','Wow, Ermias! There is a tiny baby d
 
 function guide(){
 if(!state.started||state.complete||quest.dialog)return;
+if(quest.zone===2){
+let choices=quest.stage===7?crystals.filter(c=>!c.got):
+quest.stage===8?[raceRings[quest.rings]]:
+quest.stage===9?[goldenPoint]:[];
+choices=choices.filter(Boolean).sort((a,b)=>distance(kid,a)-distance(kid,b));
+if(!choices.length)return notice('Rainbow Volcano adventure completed! 🎉');
+state.target={x:choices[0].x,z:choices[0].z};
+notice('Rexy knows the rainbow trail! 🌈');return;
+}
 let choices=[];
 switch(quest.stage){
 case 0:choices=items.filter(i=>!i.got&&i.type==='egg');break;
@@ -532,16 +550,20 @@ notice(quest.riding?'Rexy knows the way! 🦖💨':'Follow the trail! 🧭');
 
 
 function reset(){
-try{localStorage.removeItem('ermias-dino-3d-v2')}catch(e){}
+try{localStorage.removeItem('ermias-dino-3d-v3')}catch(e){}
 for(const k in bag)bag[k]=0;
 items.forEach(i=>{i.got=false;i.object.visible=true});
 dinoData.forEach((d,i)=>{d.fed=false;d.x=[-12,12,12][i];d.z=[-8,-8,12][i];d.object.position.set(d.x,0,d.z)});
 kid.x=0;kid.z=0;state.target=null;state.complete=false;state.started=true;
 quest.stage=0;quest.hatched=false;quest.riding=false;quest.gateReached=false;quest.jump=0;
+quest.zone=1;quest.rings=0;quest.volcanoDone=false;
+crystals.forEach(c=>{c.got=false;c.object.visible=true});
+raceRings.forEach(r=>r.object.visible=false);goldenEgg.visible=false;
+setZoneDisplay();
 pip.visible=false;rider.group.visible=false;ermias.group.visible=true;upgraded=false;
 base.children.slice().forEach(o=>{if(o!==tent&&o!==flagBar&&o!==flag&&o.type==='Group')base.remove(o)});
 tent.visible=true;
-$('ending').classList.remove('show');cover.classList.add('hidden');
+$('ending').classList.remove('show');$('volcano-ending').classList.remove('show');cover.classList.add('hidden');
 update();
 showStory('👨🏽‍🦱🦖','Dad has a mission!','Ermias, a baby dinosaur is lost somewhere in Dino Meadow. Let’s find its egg and help it hatch!','Let’s find it! 🥚',()=>notice('Press GO! to find the egg! 🧭'));
 }
@@ -562,7 +584,7 @@ if(!state.started||state.complete||quest.dialog)return;
 const b=canvas.getBoundingClientRect();pointer.x=(e.clientX-b.left)/b.width*2-1;pointer.y=-(e.clientY-b.top)/b.height*2+1;
 raycaster.setFromCamera(pointer,camera);
 const v=new THREE.Vector3();
-if(raycaster.ray.intersectPlane(plane,v)){state.target={x:Math.max(-19,Math.min(19,v.x)),z:Math.max(-19,Math.min(19,v.z))};}
+if(raycaster.ray.intersectPlane(plane,v)){state.target={x:Math.max(quest.zone===2?VOL.x-19:-19,Math.min(quest.zone===2?VOL.x+19:19,v.x)),z:Math.max(quest.zone===2?VOL.z-19:-19,Math.min(quest.zone===2?VOL.z+19:19,v.z))};}
 });
 $('go').addEventListener('click',guide);act.addEventListener('click',interaction);
 function jump(){
@@ -573,11 +595,20 @@ $('jump').addEventListener('click',jump);
 $('reset').addEventListener('click',reset);
 $('sound').addEventListener('click',()=>{state.sound=!state.sound;$('sound').textContent=state.sound?'🔊':'🔇';notice(state.sound?'Sound on! 🎵':'Sound off')});
 $('again').addEventListener('click',reset);
-play.disabled=false;play.textContent=state.complete?'🏆 See my Dino Camp!':items.some(i=>i.got)?'▶ CONTINUE ADVENTURE':'▶ PLAY NOW';
+$('nextworld').addEventListener('click',()=>travelToVolcano());
+$('preview-volcano').addEventListener('click',()=>travelToVolcano(true));
+$('return-home').addEventListener('click',returnHome);
+$('replay-volcano').addEventListener('click',()=>travelToVolcano(true));
+play.disabled=false;$('preview-volcano').disabled=false;
+play.textContent=quest.zone===2?(quest.volcanoDone?'🏆 See my Volcano Adventure':'▶ Continue Rainbow Volcano'):state.complete?'🏆 See my Dino Camp!':items.some(i=>i.got)?'▶ CONTINUE ADVENTURE':'▶ PLAY NOW';
 loading.textContent='The dinosaurs are ready! ✅';
 
 play.addEventListener('click',()=>{
 cover.classList.add('hidden');state.started=true;
+if(quest.zone===2){
+ if(quest.volcanoDone){$('volcano-ending').classList.add('show');return;}
+ notice('Welcome back to Rainbow Volcano! 🌋');return;
+}
 if(state.complete){$('ending').classList.add('show');return;}
 if(quest.stage===0){
 showStory('👨🏽‍🦱🥚','Dad needs your help!','Ermias, a baby dinosaur is lost in Dino Meadow! Find its mystery egg, hatch it, and let’s go meet the big dinosaurs!','Let’s rescue it! 🦖',()=>notice('Press GO! to find the egg! 🧭'));
