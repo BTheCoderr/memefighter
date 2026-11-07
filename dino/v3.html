@@ -311,31 +311,116 @@ function distance(a,b){return Math.hypot(a.x-b.x,(a.z??a.y)-(b.z??b.y))}
 function allSupplies(){return bag.egg>=3&&bag.wood>=4&&bag.star>=3}
 function allDinos(){return dinoData.every(d=>d.fed)}
 
+
 function save(){
-try{localStorage.setItem('ermias-dino-3d-v2',JSON.stringify({
-bag,items:items.map(x=>x.got),dinos:dinoData.map(x=>x.fed),
-kid,complete:state.complete,stage:quest.stage,hatched:quest.hatched,
-riding:quest.riding,gateReached:quest.gateReached
+try{localStorage.setItem('ermias-dino-3d-v3',JSON.stringify({
+ bag,items:items.map(x=>x.got),dinos:dinoData.map(x=>x.fed),
+ kid,complete:state.complete,stage:quest.stage,hatched:quest.hatched,
+ riding:quest.riding,gateReached:quest.gateReached,zone:quest.zone,
+ volcanoCrystals:crystals.map(x=>x.got),rings:quest.rings,volcanoDone:quest.volcanoDone
 }))}catch(e){}
+}
+function setZoneDisplay(){
+ const isVolcano=quest.zone===2;
+ $('location-name').textContent=isVolcano?'3D Adventure · Rainbow Volcano':'3D Adventure · Dino Meadow';
+ $('level-label').textContent=isVolcano?'🌋 LEVEL 2':'🌈 LEVEL 1';
+ scene.background.set(isVolcano?'#f7b9d2':'#97ddf4');
+ scene.fog.color.set(isVolcano?'#e4b4e6':'#a2e5ed');
 }
 function restore(){
 try{
-const s=JSON.parse(localStorage.getItem('ermias-dino-3d-v2')||'null');if(!s)return;
+let s=JSON.parse(localStorage.getItem('ermias-dino-3d-v3')||'null'),fromOld=false;
+if(!s){s=JSON.parse(localStorage.getItem('ermias-dino-3d-v2')||'null');fromOld=!!s}
+if(!s)return;
 for(const k of Object.keys(bag))bag[k]=Math.max(0,Number(s.bag?.[k])||0);
 items.forEach((it,i)=>{it.got=!!s.items?.[i];it.object.visible=!it.got});
 dinoData.forEach((d,i)=>d.fed=!!s.dinos?.[i]);
-kid.x=Math.min(18,Math.max(-18,Number(s.kid?.x)||0));
-kid.z=Math.min(18,Math.max(-18,Number(s.kid?.z)||0));
+kid.x=Number.isFinite(+s.kid?.x)?+s.kid.x:0;
+kid.z=Number.isFinite(+s.kid?.z)?+s.kid.z:0;
 state.complete=!!s.complete;
-quest.stage=Math.max(0,Math.min(6,Number(s.stage)||0));
-quest.hatched=!!s.hatched;quest.riding=!!s.riding&&rexy.fed;
-quest.gateReached=!!s.gateReached;
+quest.stage=Math.max(0,Math.min(10,Number(s.stage)||0));
+quest.zone=!fromOld&&s.zone===2?2:1;
+quest.hatched=!!s.hatched;quest.riding=!!s.riding&&rexy.fed;quest.gateReached=!!s.gateReached;
+quest.rings=Math.max(0,Math.min(3,Number(s.rings)||0));quest.volcanoDone=!!s.volcanoDone;
 pip.visible=quest.hatched;pip.position.set(kid.x+1,0,kid.z+1);
+crystals.forEach((c,i)=>{c.got=!!s.volcanoCrystals?.[i];c.object.visible=!c.got});
+if(quest.zone===2){
+ quest.hatched=true;pip.visible=true;rexy.fed=true;
+ kid.x=Math.max(VOL.x-19,Math.min(VOL.x+19,kid.x));
+ kid.z=Math.max(VOL.z-19,Math.min(VOL.z+19,kid.z));
+ quest.riding=true;
+ state.complete=quest.volcanoDone;
+ goldenEgg.visible=quest.stage===9;
+ raceRings.forEach((r,i)=>r.object.visible=quest.stage===8&&i===quest.rings);
+}else{
+ kid.x=Math.max(-19,Math.min(19,kid.x));kid.z=Math.max(-19,Math.min(19,kid.z));
+ if(state.complete){quest.stage=6;buildCamp();}
+}
+if(quest.zone===2){buildCamp();}
 if(quest.riding){rexy.object.position.set(kid.x,0,kid.z);rider.group.visible=true;ermias.group.visible=false;}
-if(state.complete){quest.stage=6;buildCamp();}
-}catch(e){/* Starting fresh is safe if a saved run is stale. */}
+setZoneDisplay();
+}catch(e){/* Corrupt saves should start safely from Level 1. */}
 }
 restore();
+function travelToVolcano(preview=false){
+ if(quest.riding){rider.group.visible=false;ermias.group.visible=true;}
+ quest.zone=2;quest.stage=7;quest.volcanoDone=false;quest.rings=0;
+ quest.hatched=true;quest.riding=true;quest.dialog=false;state.complete=false;
+ rexy.fed=true;
+ crystals.forEach(c=>{c.got=false;c.object.visible=true});
+ raceRings.forEach(r=>r.object.visible=false);
+ goldenEgg.visible=false;
+ kid.x=VOL.x-2;kid.z=VOL.z-2;
+ rexy.object.position.set(kid.x,0,kid.z);rider.group.visible=true;ermias.group.visible=false;
+ pip.visible=true;pip.position.set(kid.x-1,0,kid.z-1);
+ state.target=null;
+ $('ending').classList.remove('show');$('volcano-ending').classList.remove('show');cover.classList.add('hidden');
+ state.started=true;setZoneDisplay();update();save();
+ showStory('🌋💎','Welcome to Rainbow Volcano!','Look at all the glowing colors! Ride Rexy to find five rainbow crystals. Then follow the magical hoops and rescue a golden dinosaur egg.','Let’s explore! 🦖',()=>notice('Find five glowing crystals! Press GO! 🧭'));
+}
+function returnHome(){
+ quest.zone=1;quest.stage=6;quest.riding=false;quest.volcanoDone=false;
+ state.complete=true;quest.dialog=false;state.target=null;
+ rexy.object.position.set(-12,0,-8);
+ kid.x=3;kid.z=3;
+ rider.group.visible=false;ermias.group.visible=true;
+ $('volcano-ending').classList.remove('show');
+ setZoneDisplay();update();save();
+ $('ending').classList.add('show');
+}
+function collectVolcano(){
+ if(quest.stage===7){
+ let changed=false;
+ for(const c of crystals)if(!c.got&&distance(kid,c)<1.55){
+ c.got=true;c.object.visible=false;changed=true;
+ sparkles(c.x,c.z,15);notice('Rainbow crystal found! 💎');
+ }
+ if(changed){
+  if(crystals.every(c=>c.got)){
+   quest.stage=8;quest.rings=0;raceRings[0].object.visible=true;
+   showStory('🌈🏁','Time for Rexy’s Rainbow Trail!','Ride Rexy through the three glowing rainbow hoops. There is no timer, so explore at your own pace!','Ride the rainbow! 🦖',()=>notice('Follow the first glowing arch! 🧭'));
+  }
+  update();save();
+ }
+ }else if(quest.stage===8){
+ const ring=raceRings[quest.rings];
+ if(ring&&distance(kid,ring)<2.05&&quest.riding){
+  ring.object.visible=false;sparkles(ring.x,ring.z,32);quest.rings++;
+  notice('Rainbow hoop '+quest.rings+' of 3! 🌈');
+  if(quest.rings===3){
+   quest.stage=9;goldenEgg.visible=true;
+   showStory('🥚🌟','The golden egg appeared!','Amazing riding, Ermias! A shining golden egg has appeared in Rainbow Volcano. Can you find it with Pip?','Find the golden egg! 🥚',()=>notice('Press GO! to find the golden egg!'));
+  }else raceRings[quest.rings].object.visible=true;
+  update();save();
+ }
+ }else if(quest.stage===9&&distance(kid,goldenPoint)<2.0){
+ quest.stage=10;quest.volcanoDone=true;state.complete=true;goldenEgg.visible=false;
+ sparkles(goldenPoint.x,goldenPoint.z,75);update();save();
+ showStory('🐣🌈','A golden baby dinosaur!','You did it, Ermias! Your bravery helped a rare golden dinosaur hatch. Everyone in Dino World is cheering for you!','Celebrate! 🎉',()=>{
+  $('volcano-ending').classList.add('show');notice('Rainbow Volcano champion! 🏆');
+ });
+ }
+}
 
 function effect(freq=520){if(!state.sound)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!window._dinoAudio)window._dinoAudio=new C;const a=window._dinoAudio,o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=freq;g.gain.setValueAtTime(.11,a.currentTime);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.16);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.17)}catch(e){}}
 function notice(s){const t=$('toast');t.textContent=s;t.classList.add('visible');state.toastEnd=performance.now()+2400;effect(620);}
