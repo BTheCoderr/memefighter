@@ -79,6 +79,10 @@ function cone(parent,c,x,y,z,r,h,n=7){return add(parent,new THREE.ConeGeometry(r
 function bar(parent,c,a,b,r=.1){let va=new THREE.Vector3(...a),vb=new THREE.Vector3(...b),d=vb.clone().sub(va);let o=add(parent,new THREE.CylinderGeometry(r,r,d.length(),7),c);o.position.copy(va.add(vb).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());return o}
 function seeded(n){const q=Math.sin(n*119.27+34.24)*43758.47;return q-Math.floor(q)}
 const world=new THREE.Group();scene.add(world);
+// Ground-level collision shapes are registered from the SAME scenery positions that are drawn.
+const blockers={1:[],2:[]};
+function block(x,z,r,zone=1,label='scenery'){blockers[zone].push({x,z,r,label});}
+
 add(world,new THREE.PlaneGeometry(48,48),M.grass,0,-.08,0).rotation.x=-Math.PI/2;
 const border=add(world,new THREE.CylinderGeometry(33,34,3,12),mat('#65995a'),0,-1.62,0);
 const islandTop=add(world,new THREE.CylinderGeometry(30,30,0.4,14),mat('#7cc973'),0,-.25,0);
@@ -90,6 +94,7 @@ for(let i=0;i<40;i++){const x=(seeded(i+5)-.5)*42,z=(seeded(i+66)-.5)*42;if(x*x+
 for(let i=0;i<45;i++){
 const a=i*.85,r=21+seeded(i+5)*3,x=Math.cos(a)*r,z=Math.sin(a)*r;
 cyl(world,M.wood,x,1,z,.27,.35,2,7);
+block(x,z,.75,1,'tree');
 const g=new THREE.Group();g.position.set(x,1.5,z);world.add(g);
 orb(g,i%2?M.leaf:M.leaf2,0,1.1,0,1.1,1.45,1.1);orb(g,i%2?M.leaf2:M.leaf3,0,2.2,0,.77,.85,.77);
 }
@@ -98,8 +103,10 @@ let x=(seeded(i+98)-.5)*38,z=(seeded(i+153)-.5)*38;
 if(Math.hypot(x,z)<5)continue;
 orb(world,i%3?mat('#f8f5be'):mat('#e8a6ce'),x,.05,z,.1,.11,.1);
 }
-for(let i=0;i<13;i++){let x=-22+seeded(i+124)*44,z=-22+seeded(i+412)*44;if(Math.hypot(x,z)<8)continue;const rock=orb(world,mat(i%2?'#8aa4a0':'#8eac9c'),x,.24,z,.7,.4,.53);rock.rotation.y=i*.8;}
+for(let i=0;i<13;i++){let x=-22+seeded(i+124)*44,z=-22+seeded(i+412)*44;if(Math.hypot(x,z)<8)continue;const rock=orb(world,mat(i%2?'#8aa4a0':'#8eac9c'),x,.24,z,.7,.4,.53);rock.rotation.y=i*.8;block(x,z,.63,1,'rock');}
 const base=new THREE.Group();world.add(base);base.position.set(3,0,2);
+block(3,2,1.8,1,'Dino Camp');
+block(-3,-1.5,.60,1,'Dad');
 patch(3,2,2.9,'#e8c68a');
 for(let i=0;i<6;i++)bar(base,M.darkWood,[Math.cos(i)*2,.18,Math.sin(i)*2],[Math.cos(i+.5)*2,.18,Math.sin(i+.5)*2],.1);
 let tent=cone(base,mat('#f4b760'),0,1.45,0,2.4,2.7,4);tent.rotation.y=Math.PI/4;
@@ -222,6 +229,7 @@ for(let i=0;i<26;i++){
  o.rotation.y=a;
 }
 const mt=cone(volcanoWorld,VM.stone,13,4.3,-12,6.1,9.0,10);
+block(VOL.x+13,VOL.z-12,5.95,2,'volcano');
 const ridge=cone(volcanoWorld,VM.rock,13,8.8,-12,2.6,1.8,10);
 const crater=cyl(volcanoWorld,VM.lava,13,8.55,-12,1.25,1.25,.16,10);
 for(let i=0;i<8;i++){const a=i*.785,c=mat(['#faaa6a','#ffce70','#ea8bc2'][i%3]);orb(volcanoWorld,c,13+Math.cos(a)*1.9,8.25+Math.sin(a)*.15,-12+Math.sin(a)*1.9,.22,.35,.22)}
@@ -229,6 +237,7 @@ for(let i=0;i<14;i++){
  const a=i*1.83,r=10+seeded(i+29)*8,x=Math.sin(a)*r,z=Math.cos(a)*r;
  if(Math.hypot(x-13,z+12)<5)continue;
  const trunk=cyl(volcanoWorld,VM.stone,x,.7,z,.20,.27,1.35,7);
+block(VOL.x+x,VOL.z+z,.76,2,'crystal tree');
  orb(volcanoWorld,i%2?mat('#c77dd0'):mat('#8de9d4'),x,1.9,z,.65,.8,.68);
  orb(volcanoWorld,mat('#eab0ef'),x,2.6,z,.38,.45,.4);
 }
@@ -257,6 +266,7 @@ for(let i=0;i<7;i++){const a=i*2.4;orb(goldenEgg,mat('#fffcf0'),Math.sin(a)*.6,.
 const goldenPoint={x:VOL.x,z:VOL.z};
 const volcanoBuddy=makeDino('Spike','#dd9fe5');volcanoWorld.add(volcanoBuddy);
 volcanoBuddy.position.set(-8,0,9);volcanoBuddy.scale.setScalar(.68);
+block(VOL.x-8,VOL.z+9,.72,2,'dinosaur friend');
 
 const bag={egg:0,wood:0,star:0,berry:0},kid={x:0,z:0},keys={};
 const state={started:false,complete:false,sound:false,target:null,last:0,phase:0,toastEnd:0};
