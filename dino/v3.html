@@ -522,6 +522,7 @@ if(quest.zone===2){
 if(quest.zone===2){buildCamp();}
 if(quest.riding){rexy.object.position.set(kid.x,0,kid.z);rider.group.visible=true;ermias.group.visible=false;}
 setZoneDisplay();
+repairPosition();
 }catch(e){/* Corrupt saves should start safely from Level 1. */}
 }
 restore();
@@ -535,9 +536,10 @@ function travelToVolcano(preview=false){
  raceRings.forEach(r=>r.object.visible=false);
  goldenEgg.visible=false;
  kid.x=VOL.x-2;kid.z=VOL.z-2;
+ repairPosition();
  rexy.object.position.set(kid.x,0,kid.z);rider.group.visible=true;ermias.group.visible=false;
  pip.visible=true;pip.position.set(kid.x-1,0,kid.z-1);
- state.target=null;
+ state.target=null;state.route=[];
  $('ending').classList.remove('show');$('volcano-ending').classList.remove('show');cover.classList.add('hidden');
  state.started=true;setZoneDisplay();update();save();
  showStory('🌋💎','Welcome to Rainbow Volcano!','Look at all the glowing colors! Ride Rexy to find five rainbow crystals. Then follow the magical hoops and rescue a golden dinosaur egg.','Let’s explore! 🦖',()=>notice('Find five glowing crystals! Press GO! 🧭'));
@@ -548,6 +550,7 @@ function returnHome(){
  state.complete=true;quest.dialog=false;state.target=null;
  rexy.x=-12;rexy.z=-8;rexy.object.position.set(-12,0,-8);
  kid.x=3;kid.z=3;
+ repairPosition();
  rider.group.visible=false;ermias.group.visible=true;
  $('volcano-ending').classList.remove('show');
  setZoneDisplay();update();save();
@@ -689,7 +692,7 @@ quest.stage===8?[raceRings[quest.rings]]:
 quest.stage===9?[goldenPoint]:[];
 choices=choices.filter(Boolean).sort((a,b)=>distance(kid,a)-distance(kid,b));
 if(!choices.length)return notice('Rainbow Volcano adventure completed! 🎉');
-state.target={x:choices[0].x,z:choices[0].z};
+navigateTo(choices[0]);
 notice('Rexy knows the rainbow trail! 🌈');return;
 }
 let choices=[];
@@ -709,7 +712,7 @@ case 5:
 }
 if(!choices.length)choices=[{x:3,z:2}];
 choices.sort((a,b)=>distance(kid,a)-distance(kid,b));
-state.target={x:choices[0].x,z:choices[0].z};
+navigateTo(choices[0]);
 notice(quest.riding?'Rexy knows the way! 🦖💨':'Follow the trail! 🧭');
 }
 
@@ -719,7 +722,7 @@ try{localStorage.removeItem('ermias-dino-3d-v3')}catch(e){}
 for(const k in bag)bag[k]=0;
 items.forEach(i=>{i.got=false;i.object.visible=true});
 dinoData.forEach((d,i)=>{d.fed=false;d.x=[-12,12,12][i];d.z=[-8,-8,12][i];d.object.position.set(d.x,0,d.z)});
-kid.x=0;kid.z=0;state.target=null;state.complete=false;state.started=true;
+kid.x=0;kid.z=0;state.target=null;state.route=[];state.complete=false;state.started=true;
 quest.stage=0;quest.hatched=false;quest.riding=false;quest.gateReached=false;quest.jump=0;
 quest.zone=1;quest.rings=0;quest.volcanoDone=false;
 crystals.forEach(c=>{c.got=false;c.object.visible=true});
@@ -749,7 +752,7 @@ if(!state.started||state.complete||quest.dialog)return;
 const b=canvas.getBoundingClientRect();pointer.x=(e.clientX-b.left)/b.width*2-1;pointer.y=-(e.clientY-b.top)/b.height*2+1;
 raycaster.setFromCamera(pointer,camera);
 const v=new THREE.Vector3();
-if(raycaster.ray.intersectPlane(plane,v)){state.target={x:Math.max(quest.zone===2?VOL.x-19:-19,Math.min(quest.zone===2?VOL.x+19:19,v.x)),z:Math.max(quest.zone===2?VOL.z-19:-19,Math.min(quest.zone===2?VOL.z+19:19,v.z))};}
+if(raycaster.ray.intersectPlane(plane,v))navigateTo({x:v.x,z:v.z});
 });
 $('go').addEventListener('click',guide);act.addEventListener('click',interaction);
 function jump(){
@@ -804,24 +807,36 @@ let dy=stick.y+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
 let vx=0,vz=0;
 if(Math.hypot(dx,dy)>.15){
 state.target=null;const m=Math.hypot(dx,dy);dx/=Math.max(1,m);dy/=Math.max(1,m);
-vx=(dx+dy)*.707;vz=(-dx+dy)*.707;moving=true;
+// Screen-down means toward the bottom of the angled game camera.
+vx=(dx+dy)*Math.SQRT1_2;vz=(-dx+dy)*Math.SQRT1_2;
+state.route=[];moving=true;
 }else if(state.target){
-const length=distance(kid,state.target);
-if(length<.5){state.target=null}
-else{vx=(state.target.x-kid.x)/length;vz=(state.target.z-kid.z)/length;moving=true;}
+let length=distance(kid,state.target);
+if(length<.58){
+ if(state.route&&state.route.length)state.route.shift();
+ state.target=state.route?.length?state.route[0]:null;
+ if(state.target)length=distance(kid,state.target);
+}
+if(state.target&&length>.08){
+ vx=(state.target.x-kid.x)/length;vz=(state.target.z-kid.z)/length;moving=true;
+}
 }
 if(moving){
-const speed=quest.riding?9:5.5;
-const xMin=quest.zone===2?VOL.x-19:-19,xMax=quest.zone===2?VOL.x+19:19;
-const zMin=quest.zone===2?VOL.z-19:-19,zMax=quest.zone===2?VOL.z+19:19;
-kid.x=Math.max(xMin,Math.min(xMax,kid.x+vx*speed*dt));
-kid.z=Math.max(zMin,Math.min(zMax,kid.z+vz*speed*dt));
-if(quest.zone===2){
- const xx=kid.x-VOL.x,zz=kid.z-VOL.z,rr=Math.hypot(xx,zz);
- if(rr>18.8){kid.x=VOL.x+xx/rr*18.8;kid.z=VOL.z+zz/rr*18.8;}
+const speed=quest.riding?8.3:5.2;
+const beforeX=kid.x,beforeZ=kid.z;
+const actual=moveWithCollision(vx,vz,speed*dt);
+if(actual<.002&&state.target&&state.route?.length){
+ if(!state.lastRepath||time-state.lastRepath>850){
+  const destination=state.route[state.route.length-1];
+  state.lastRepath=time;navigateTo(destination);
+ }
 }
-if(quest.riding)rexy.object.rotation.y=Math.atan2(vx,vz);
-else ermias.group.rotation.y=Math.atan2(vx,vz);
+moving=Math.hypot(kid.x-beforeX,kid.z-beforeZ)>.002;
+if(moving){
+ const faceX=kid.x-beforeX,faceZ=kid.z-beforeZ;
+ if(quest.riding)rexy.object.rotation.y=Math.atan2(faceX,faceZ);
+ else ermias.group.rotation.y=Math.atan2(faceX,faceZ);
+}
 }
 collect();setAction();
 if(quest.zone===1&&quest.stage===4&&quest.riding&&distance(kid,rainbowGate)<3.0){
