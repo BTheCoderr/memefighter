@@ -566,7 +566,7 @@ pip.visible=false;rider.group.visible=false;ermias.group.visible=true;upgraded=f
 base.children.slice().forEach(o=>{if(o!==tent&&o!==flagBar&&o!==flag&&o.type==='Group')base.remove(o)});
 tent.visible=true;
 $('ending').classList.remove('show');$('volcano-ending').classList.remove('show');cover.classList.add('hidden');
-update();
+update();save();
 showStory('👨🏽‍🦱🦖','Dad has a mission!','Ermias, a baby dinosaur is lost somewhere in Dino Meadow. Let’s find its egg and help it hatch!','Let’s find it! 🥚',()=>notice('Press GO! to find the egg! 🧭'));
 }
 
