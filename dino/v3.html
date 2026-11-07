@@ -318,6 +318,159 @@ function hatchEgg(){
 }
 
 function distance(a,b){return Math.hypot(a.x-b.x,(a.z??a.y)-(b.z??b.y))}
+
+// Collision and navigation: same footprint in both the 3D scene and the controls.
+function bodyRadius(){return quest.riding?1.03:.43;}
+function freeAt(x,z,rad=bodyRadius()){
+ if(!Number.isFinite(x)||!Number.isFinite(z))return false;
+ if(quest.zone===2){
+  if(Math.hypot(x-VOL.x,z-VOL.z)>18.5-rad)return false;
+ }else if(Math.abs(x)>19-rad||Math.abs(z)>19-rad)return false;
+ for(const o of blockers[quest.zone]){
+  if((x-o.x)**2+(z-o.z)**2<(rad+o.r)**2)return false;
+ }
+ if(quest.zone===1){
+  for(const d of dinoData){
+   if(quest.riding&&d===rexy)continue;
+   const rr=rad+(d===rexy?1.20:1.0);
+   if((x-d.x)**2+(z-d.z)**2<rr*rr)return false;
+  }
+ }
+ return true;
+}
+// Repair positions saved in the previous version, where Rexy could travel through the mountain.
+function repairPosition(){
+ const zone=quest.zone, cx=zone===2?VOL.x:0,cz=zone===2?VOL.z:0;
+ const limit=zone===2?17.4:18;
+ if(zone===2){
+  const dx=kid.x-cx,dz=kid.z-cz,mag=Math.hypot(dx,dz);
+  if(mag>limit){kid.x=cx+dx/mag*limit;kid.z=cz+dz/mag*limit;}
+ }else{
+  kid.x=Math.max(-limit,Math.min(limit,kid.x));kid.z=Math.max(-limit,Math.min(limit,kid.z));
+ }
+ for(let i=0;i<20&&!freeAt(kid.x,kid.z);i++){
+  let pushed=false, rad=bodyRadius();
+  const obstacles=[...blockers[zone]];
+  if(zone===1)for(const d of dinoData){
+   if(!(quest.riding&&d===rexy))obstacles.push({x:d.x,z:d.z,r:d===rexy?1.2:1.0});
+  }
+  for(const o of obstacles){
+   const dx=kid.x-o.x,dz=kid.z-o.z,dist=Math.hypot(dx,dz),min=rad+o.r+.05;
+   if(dist<min){
+    const nx=dist>.01?dx/dist:.707,nz=dist>.01?dz/dist:.707;
+    kid.x=o.x+nx*min;kid.z=o.z+nz*min;pushed=true;
+   }
+  }
+  if(zone===2){
+   const dx=kid.x-cx,dz=kid.z-cz,mag=Math.hypot(dx,dz);
+   if(mag>limit){kid.x=cx+dx/mag*limit;kid.z=cz+dz/mag*limit;pushed=true;}
+  }else{
+   kid.x=Math.max(-limit,Math.min(limit,kid.x));kid.z=Math.max(-limit,Math.min(limit,kid.z));
+  }
+  if(!pushed)break;
+ }
+ if(!freeAt(kid.x,kid.z)){
+  // Search outward from the saved point, never put a child in an object or off the island.
+  let best=null;
+  for(let radius=0;radius<=20&&!best;radius+=.7){
+   for(let k=0;k<32;k++){
+    const a=k*Math.PI/16,x=kid.x+Math.cos(a)*radius,z=kid.z+Math.sin(a)*radius;
+    if(freeAt(x,z)){best={x,z};break;}
+   }
+  }
+  if(best){kid.x=best.x;kid.z=best.z;}
+ }
+}
+function moveWithCollision(vx,vz,amount){
+ const stepSize=.18,n=Math.max(1,Math.ceil(amount/stepSize)),dist=amount/n;
+ let moved=0;
+ for(let i=0;i<n;i++){
+  const dx=vx*dist,dz=vz*dist,tx=kid.x+dx,tz=kid.z+dz;
+  if(freeAt(tx,tz)){kid.x=tx;kid.z=tz;moved+=dist;continue;}
+  // Wall sliding makes diagonal and downward movement fluid instead of freezing.
+  let xOK=freeAt(tx,kid.z),zOK=freeAt(kid.x,tz);
+  if(xOK&&zOK){
+   // Try the direction that preserves more of the movement.
+   if(Math.abs(dx)>=Math.abs(dz)){kid.x=tx;moved+=Math.abs(dx);}
+   else{kid.z=tz;moved+=Math.abs(dz);}
+  }else if(xOK){kid.x=tx;moved+=Math.abs(dx);}
+  else if(zOK){kid.z=tz;moved+=Math.abs(dz);}
+ }
+ return moved;
+}
+// A small A* grid for the GO! and tap-to-move controls.
+function routeTo(goal){
+ const ox=quest.zone===2?VOL.x:0,oz=quest.zone===2?VOL.z:0,half=18,side=37;
+ const toIndex=(v,o)=>Math.max(0,Math.min(side-1,Math.round(v-o)+half));
+ const point=(i,j)=>({x:ox+i-half,z:oz+j-half});
+ const idx=(i,j)=>j*side+i;
+ const startI=toIndex(kid.x,ox),startJ=toIndex(kid.z,oz);
+ // Goal may be inside a dinosaur's collider. Stop at the nearest reachable approach point.
+ const candidates=[];
+ for(let i=0;i<side;i++)for(let j=0;j<side;j++){
+  const p=point(i,j);
+  if(freeAt(p.x,p.z))candidates.push({i,j,d:(p.x-goal.x)**2+(p.z-goal.z)**2});
+ }
+ candidates.sort((a,b)=>a.d-b.d);
+ if(!candidates.length)return null;
+ let gi=candidates[0].i,gj=candidates[0].j;
+ const si=startI,sj=startJ,startKey=idx(si,sj),goalKey=idx(gi,gj);
+ let startPoint=point(si,sj);
+ if(!freeAt(startPoint.x,startPoint.z)){
+  let nearest=candidates.reduce((best,c)=>{
+   const p=point(c.i,c.j),d=(p.x-kid.x)**2+(p.z-kid.z)**2;
+   return d<best.d?{i:c.i,j:c.j,d}:best;
+  },{i:si,j:sj,d:Infinity});
+  startPoint=point(nearest.i,nearest.j);
+ }
+ const start=idx(toIndex(startPoint.x,ox),toIndex(startPoint.z,oz));
+ const open=[start],g=new Float32Array(side*side).fill(Infinity),parent=new Int32Array(side*side).fill(-1),closed=new Uint8Array(side*side);
+ g[start]=0;
+ const moves=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+ let visited=0;
+ while(open.length&&visited++<side*side){
+  let bi=0,bscore=Infinity;
+  for(let k=0;k<open.length;k++){
+   const v=open[k],i=v%side,j=Math.floor(v/side),h=Math.hypot(gi-i,gj-j),score=g[v]+h;
+   if(score<bscore){bscore=score;bi=k;}
+  }
+  const current=open.splice(bi,1)[0];
+  if(current===goalKey){
+   const result=[];
+   let v=current;
+   while(v!==start&&v!==-1){
+    const i=v%side,j=Math.floor(v/side);result.push(point(i,j));v=parent[v];
+   }
+   result.reverse();
+   // Ensure the first waypoint is reachable from the actual (non-grid) character position.
+   return result.length?result:[{x:goal.x,z:goal.z}];
+  }
+  if(closed[current])continue;closed[current]=1;
+  const x=current%side,z=Math.floor(current/side);
+  for(const [di,dj] of moves){
+   const i=x+di,j=z+dj;
+   if(i<0||j<0||i>=side||j>=side)continue;
+   const p=point(i,j),key=idx(i,j);
+   if(closed[key]||!freeAt(p.x,p.z))continue;
+   if(di&&dj){
+    const a=point(x+di,z),b=point(x,z+dj);
+    if(!freeAt(a.x,a.z)||!freeAt(b.x,b.z))continue; // no corner cutting
+   }
+   const tentative=g[current]+(di&&dj?Math.SQRT2:1);
+   if(tentative<g[key]){g[key]=tentative;parent[key]=current;if(!open.includes(key))open.push(key);}
+  }
+ }
+ return null;
+}
+function navigateTo(goal){
+ let path=routeTo(goal);
+ if(!path){notice('That path is blocked. Try going around! 🪨');return;}
+ // Skip first waypoint when the character is already near it.
+ while(path.length>1&&distance(kid,path[0])<.7)path.shift();
+ state.route=path;
+ state.target=path[0]||null;
+}
+
 function allSupplies(){return bag.egg>=3&&bag.wood>=4&&bag.star>=3}
 function allDinos(){return dinoData.every(d=>d.fed)}
 
